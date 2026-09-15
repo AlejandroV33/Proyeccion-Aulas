@@ -10,14 +10,19 @@ import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javax.swing.JOptionPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+
 import java.io.IOException;
 
+/**
+ * Controlador de la vista principal (solo lectura).
+ * Muestra los resultados de la proyección de aulas con filtros de búsqueda
+ * y permite navegar a la vista de Gestión o abrir el módulo de Asignación.
+ */
 public class MainController {
 
     @FXML private TableView<ResultadoFinal> tablaResultados;
@@ -41,8 +46,7 @@ public class MainController {
     private final VistaResultadoDAO vistaDAO = new VistaResultadoDAO();
     private final ExcelService excelService = new ExcelService();
 
-    // listas para manejar el filtrado
-    private ObservableList<ResultadoFinal> masterData = FXCollections.observableArrayList();
+    private final ObservableList<ResultadoFinal> masterData = FXCollections.observableArrayList();
     private FilteredList<ResultadoFinal> filteredData;
 
     @FXML
@@ -77,15 +81,9 @@ public class MainController {
     private void configurarFiltros() {
         filteredData = new FilteredList<>(masterData, p -> true);
 
-        // listener para materia
-        txtBuscarMateria.textProperty().addListener((observable, oldValue, newValue) -> {
-            actualizarPredicadoFiltro();
-        });
-
-        // listener para docente
-        txtBuscarDocente.textProperty().addListener((observable, oldValue, newValue) -> {
-            actualizarPredicadoFiltro();
-        });
+        // ambos listeners invocan el mismo método de actualización
+        txtBuscarMateria.textProperty().addListener((obs, old, val) -> actualizarPredicadoFiltro());
+        txtBuscarDocente.textProperty().addListener((obs, old, val) -> actualizarPredicadoFiltro());
 
         // conectar lista filtrada con la tabla y permitir ordenamiento por columnas
         SortedList<ResultadoFinal> sortedData = new SortedList<>(filteredData);
@@ -98,13 +96,10 @@ public class MainController {
         String filtroDocente = txtBuscarDocente.getText().toLowerCase();
 
         filteredData.setPredicate(resultado -> {
-            boolean coincideMateria = resultado.getMateria() != null && resultado.getMateria().toLowerCase().contains(filtroMateria);
-            boolean coincideDocente = resultado.getProfesor() != null && resultado.getProfesor().toLowerCase().contains(filtroDocente);
-
-            // si el campo de busqueda esta vacio, se considera como coincidencia
-            if (filtroMateria.isEmpty()) coincideMateria = true;
-            if (filtroDocente.isEmpty()) coincideDocente = true;
-
+            boolean coincideMateria = filtroMateria.isEmpty()
+                    || (resultado.getMateria() != null && resultado.getMateria().toLowerCase().contains(filtroMateria));
+            boolean coincideDocente = filtroDocente.isEmpty()
+                    || (resultado.getProfesor() != null && resultado.getProfesor().toLowerCase().contains(filtroDocente));
             return coincideMateria && coincideDocente;
         });
 
@@ -113,19 +108,18 @@ public class MainController {
 
     @FXML
     public void exportarExcel() {
-        // usamos la lista filtrada que el usuario esta viendo en este momento
         String path = System.getProperty("user.home") + "/Desktop/Reporte_Aulas_FIQA.xlsx";
         try {
             excelService.generarReporte(path, masterData);
             lblEstado.setText("excel exportado a: " + path);
-            // NUEVO: Alerta nativa de JavaFX
-            javafx.scene.control.Alert alerta = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+
+            Alert alerta = new Alert(Alert.AlertType.INFORMATION);
             alerta.setTitle("Éxito");
             alerta.setHeaderText(null);
             alerta.setContentText("reporte generado exitosamente en el escritorio.");
             alerta.showAndWait();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "error al exportar excel: " + e.getMessage());
+            new Alert(Alert.AlertType.ERROR, "error al exportar excel: " + e.getMessage()).show();
         }
     }
 
@@ -134,34 +128,32 @@ public class MainController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/GestionView.fxml"));
             Parent nuevaVista = loader.load();
-
-            // cambia la raiz de la escena actual en lugar de abrir una ventana nueva
             tablaResultados.getScene().setRoot(nuevaVista);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "error al cambiar de vista: " + e.getMessage());
+            new Alert(Alert.AlertType.ERROR, "error al cambiar de vista: " + e.getMessage()).show();
         }
     }
 
     @FXML
     public void abrirAsignacion() {
         try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/view/AsignacionView.fxml"));
-            javafx.scene.Parent root = loader.load();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/AsignacionView.fxml"));
+            Parent root = loader.load();
 
-            javafx.scene.Scene scene = new javafx.scene.Scene(root);
+            Scene scene = new Scene(root);
             scene.getStylesheets().add(getClass().getResource("/styles/styles.css").toExternalForm());
 
-            javafx.stage.Stage stage = new javafx.stage.Stage();
-            stage.setTitle("asignacion de aulas");
+            Stage stage = new Stage();
+            stage.setTitle("Asignación de Aulas");
             stage.setScene(scene);
-            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL); // bloquea la ventana principal
+            stage.initModality(Modality.APPLICATION_MODAL);
 
             // recargar datos en la tabla principal cuando se cierre el modal
             stage.setOnHidden(e -> cargarDatos());
 
             stage.showAndWait();
-        } catch (java.io.IOException e) {
-            JOptionPane.showMessageDialog(null, "error al abrir ventana de asignacion: " + e.getMessage());
+        } catch (IOException e) {
+            new Alert(Alert.AlertType.ERROR, "error al abrir ventana de asignación: " + e.getMessage()).show();
             e.printStackTrace();
         }
     }

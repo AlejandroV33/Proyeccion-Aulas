@@ -13,8 +13,6 @@ import java.util.stream.Collectors;
 
 public class ExcelService {
 
-//    private final VistaResultadoDAO vistaDAO = new VistaResultadoDAO();
-
     // Estilos globales
     private CellStyle headerStyle;
     private CellStyle groupHeaderStyle;

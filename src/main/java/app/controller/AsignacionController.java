@@ -7,10 +7,16 @@ import app.model.service.SimulatedAnnealingService;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextArea;
 
+/**
+ * Controlador del módulo de Asignación de Aulas.
+ * Ejecuta el algoritmo de Simulated Annealing en un hilo secundario
+ * y permite exportar los resultados a Excel.
+ */
 public class AsignacionController {
 
     @FXML private TextArea txtConsola;
@@ -39,44 +45,39 @@ public class AsignacionController {
         progressIndicator.setVisible(true);
         txtConsola.clear();
 
-        // creamos una tarea en segundo plano
         Task<Void> tareaAsignacion = new Task<>() {
             @Override
             protected Void call() {
-                // pasamos un lambda para actualizar el textarea desde el hilo secundario
-                algoritmo.ejecutarMejorDeTres(mensaje -> {
-                    Platform.runLater(() -> escribirConsola(mensaje));
-                });
+                algoritmo.ejecutarMejorDeTres(mensaje ->
+                        Platform.runLater(() -> escribirConsola(mensaje)));
                 return null;
             }
         };
 
-        // cuando termine la tarea
         tareaAsignacion.setOnSucceeded(e -> {
-            btnAsignar.setDisable(false);
-            progressIndicator.setVisible(false);
+            restaurarUI();
             escribirConsola("--- proceso completado. ya puede exportar o cerrar ---");
         });
 
         tareaAsignacion.setOnFailed(e -> {
-            btnAsignar.setDisable(false);
-            progressIndicator.setVisible(false);
+            restaurarUI();
             escribirConsola("error critico durante la ejecucion: " + tareaAsignacion.getException().getMessage());
         });
 
-        // iniciamos el hilo
-        new Thread(tareaAsignacion).start();
+        // Hilo daemon para que no bloquee el cierre de la aplicación
+        Thread hilo = new Thread(tareaAsignacion);
+        hilo.setDaemon(true);
+        hilo.start();
     }
 
     @FXML
     public void exportarExcel() {
         String path = System.getProperty("user.home") + "/Desktop/Reporte_Aulas_FIQA.xlsx";
         try {
-            // pasamos todos los datos actuales de la bd al excel
             excelService.generarReporte(path, vistaDAO.listarResultados());
             escribirConsola("excel exportado correctamente a: " + path);
-            // NUEVO: Alerta nativa de JavaFX
-            javafx.scene.control.Alert alerta = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+
+            Alert alerta = new Alert(Alert.AlertType.INFORMATION);
             alerta.setTitle("Éxito");
             alerta.setHeaderText(null);
             alerta.setContentText("reporte generado exitosamente en el escritorio.");
@@ -84,6 +85,12 @@ public class AsignacionController {
         } catch (Exception e) {
             escribirConsola("error al exportar excel: " + e.getMessage());
         }
+    }
+
+    /** Restaura el estado de la UI tras completar o fallar el algoritmo. */
+    private void restaurarUI() {
+        btnAsignar.setDisable(false);
+        progressIndicator.setVisible(false);
     }
 
     private void escribirConsola(String texto) {

@@ -19,7 +19,6 @@ public class SimulatedAnnealingService {
     private static final double TEMP_FINAL = 0.001;
     private static final double COOLING_RATE = 0.995;
     private static final int ITERACIONES_POR_TEMP = 1000;
-//    private static final double W_DIST = 0.05;
     // Pesos de Energía
     private static final double W_DIST_ESTUDIANTES = 0.08;
     private static final double W_DIST_DOCENTES = 0.3;
@@ -62,7 +61,6 @@ public class SimulatedAnnealingService {
             // limpiar asignaciones comunes en memoria para este intento
             for (HorarioDTO h : comunes) h.idAulaAsignada = null;
 
-//            double energiaFinal = ejecutarUnIntentoAnnealing(comunes, aulasComunes, todasAulas);
             double energiaFinal = ejecutarUnIntentoAnnealing(comunes, todosHorarios, aulasComunes, todasAulas);
             logger.accept("  energia obtenida en intento " + intento + ": " + String.format("%.4f", energiaFinal));
 
@@ -115,8 +113,6 @@ public class SimulatedAnnealingService {
             if (mejorAula != null) {
                 h.idAulaAsignada = mejorAula.getId();
             } else {
-//                logger.accept(String.format("alerta (sin aula especial): dia: %s, hora: %d-%d, paralelo: %s, matriculados: %d, materia: %s, docente: %s, tipo req: %s",
-//                        h.dia, h.horaInicio, h.horaFin, h.paralelo, h.matriculados, h.materia, h.docente, h.nombreTipoAula));
                 logger.accept(String.format("alerta (sin aula especial) para el horario: | %s | %s | %s | %s | %d-%d | matriculados: %d | tipo de aula requerida: %s",
                         h.docente, h.materia, h.paralelo, h.dia, h.horaInicio, h.horaFin, h.matriculados, h.nombreTipoAula));
             }
@@ -220,7 +216,6 @@ public class SimulatedAnnealingService {
     private double calcularPenalizacionesDurasDocente(List<HorarioDTO> todosHorarios, Map<Integer, Aula> mapAulas) {
         double penalizacion = 0;
 
-        // Agrupar horarios por docente (ignorando vacíos)
         Map<String, List<HorarioDTO>> porDocente = todosHorarios.stream()
                 .filter(h -> h.docente != null && !h.docente.equalsIgnoreCase("Sin profesor") && h.idAulaAsignada != null)
                 .collect(Collectors.groupingBy(h -> h.docente));
@@ -236,49 +231,46 @@ public class SimulatedAnnealingService {
 
             if (comunes.isEmpty()) continue;
 
-            Map<String, List<HorarioDTO>> comunesPorMateria = comunes.stream()
-                    .collect(Collectors.groupingBy(h -> h.materia));
-
             Set<String> pisosDeTodasLasMaterias = new HashSet<>();
-
-            // REGLA 1: Todos los paralelos/horas de UNA misma materia deben darse en el mismo edificio y piso
-            for (List<HorarioDTO> horariosMateria : comunesPorMateria.values()) {
-                Set<String> pisosDeEstaMateria = new HashSet<>();
-                for (HorarioDTO h : horariosMateria) {
-                    Aula a = mapAulas.get(h.idAulaAsignada);
-                    pisosDeEstaMateria.add(a.getEdificio() + "|" + a.getPiso());
-                }
-
-                // Si la materia se dispersa en más de 1 piso, gran penalización
-                if (pisosDeEstaMateria.size() > 1) {
-                    penalizacion += 50.0 * (pisosDeEstaMateria.size() - 1);
-                }
-                pisosDeTodasLasMaterias.addAll(pisosDeEstaMateria);
-            }
-
-            // REGLA 2: Anclaje al Laboratorio
-            if (!especiales.isEmpty()) {
-                Set<String> pisosLaboratorios = new HashSet<>();
-                for (HorarioDTO h : especiales) {
-                    Aula a = mapAulas.get(h.idAulaAsignada);
-                    pisosLaboratorios.add(a.getEdificio() + "|" + a.getPiso());
-                }
-
-                boolean anclajeExitoso = false;
-                for (String pisoLab : pisosLaboratorios) {
-                    if (pisosDeTodasLasMaterias.contains(pisoLab)) {
-                        anclajeExitoso = true; // Al menos una materia está en el mismo piso que uno de sus labs
-                        break;
-                    }
-                }
-
-                // Si ninguna materia coincide con el piso de sus laboratorios
-                if (!anclajeExitoso) {
-                    penalizacion += 100.0;
-                }
-            }
+            penalizacion += evaluarReglaUnicoPisoMateria(comunes, mapAulas, pisosDeTodasLasMaterias);
+            penalizacion += evaluarReglaAnclajeLaboratorio(especiales, mapAulas, pisosDeTodasLasMaterias);
         }
         return penalizacion;
+    }
+
+    private double evaluarReglaUnicoPisoMateria(List<HorarioDTO> comunes, Map<Integer, Aula> mapAulas, Set<String> pisosDeTodasLasMaterias) {
+        double penalizacion = 0;
+        Map<String, List<HorarioDTO>> comunesPorMateria = comunes.stream()
+                .collect(Collectors.groupingBy(h -> h.materia));
+
+        for (List<HorarioDTO> horariosMateria : comunesPorMateria.values()) {
+            Set<String> pisosDeEstaMateria = new HashSet<>();
+            for (HorarioDTO h : horariosMateria) {
+                Aula a = mapAulas.get(h.idAulaAsignada);
+                pisosDeEstaMateria.add(a.getEdificio() + "|" + a.getPiso());
+            }
+
+            if (pisosDeEstaMateria.size() > 1) {
+                penalizacion += 50.0 * (pisosDeEstaMateria.size() - 1);
+            }
+            pisosDeTodasLasMaterias.addAll(pisosDeEstaMateria);
+        }
+        return penalizacion;
+    }
+
+    private double evaluarReglaAnclajeLaboratorio(List<HorarioDTO> especiales, Map<Integer, Aula> mapAulas, Set<String> pisosDeTodasLasMaterias) {
+        if (especiales.isEmpty()) return 0;
+        
+        Set<String> pisosLaboratorios = new HashSet<>();
+        for (HorarioDTO h : especiales) {
+            Aula a = mapAulas.get(h.idAulaAsignada);
+            pisosLaboratorios.add(a.getEdificio() + "|" + a.getPiso());
+        }
+
+        boolean anclajeExitoso = pisosLaboratorios.stream()
+                .anyMatch(pisosDeTodasLasMaterias::contains);
+
+        return anclajeExitoso ? 0 : 100.0;
     }
 
     // ==========================================
@@ -325,68 +317,7 @@ public class SimulatedAnnealingService {
         return penalizacion;
     }
 
-    // Antiguo calcularDistanciaSoft renombrado
-    /*private double calcularDistanciaEstudiantes(HorarioDTO actual, List<HorarioDTO> todos, Map<Integer, Aula> aulas) {
-        double penalizacion = 0;
-        for (HorarioDTO otro : todos) {
-            if (otro == actual || otro.semestre != actual.semestre || otro.idAulaAsignada == null || !otro.dia.equals(actual.dia)) continue;
 
-            if (otro.horaFin == actual.horaInicio) {
-                Aula a1 = aulas.get(otro.idAulaAsignada);
-                Aula a2 = aulas.get(actual.idAulaAsignada);
-                penalizacion += OptimizationMetrics.calcularPenalizacionDistancia(a1.getEdificio(), a2.getEdificio());
-            }
-        }
-        return penalizacion;
-    }*/
-
-    // NUEVO: Penalización escalonada para el docente
-    /*private double calcularDistanciaDocentes(HorarioDTO actual, List<HorarioDTO> todos, Map<Integer, Aula> aulas) {
-        // Ignoramos si no tiene docente o si es el genérico
-        if (actual.docente == null || actual.docente.equalsIgnoreCase("Sin profesor") || actual.docente.isEmpty()) {
-            return 0;
-        }
-
-        double penalizacion = 0;
-        for (HorarioDTO otro : todos) {
-            // Ignorar el mismo registro, los que no tienen aula, o los de otro día
-            if (otro == actual || otro.idAulaAsignada == null || !otro.dia.equals(actual.dia)) continue;
-
-            // Si la clase del "otro" termina exactamente cuando empieza la "actual"
-            // Y ambas clases son impartidas por el mismo profesor
-            if (otro.horaFin == actual.horaInicio && actual.docente.equals(otro.docente)) {
-                Aula a1 = aulas.get(otro.idAulaAsignada); // Aula de la clase anterior
-                Aula a2 = aulas.get(actual.idAulaAsignada); // Aula de la clase que va a empezar
-
-                if (a1.getId() == a2.getId()) {
-                    penalizacion += 0; // Escenario ideal: se queda en la misma aula
-                } else if (a1.getEdificio().equals(a2.getEdificio())) {
-                    if (a1.getPiso().equals(a2.getPiso())) {
-                        penalizacion += 2; // Mismo edificio, mismo piso: Penalización leve
-                    } else {
-                        penalizacion += 10; // Mismo edificio, distinto piso: Penalización media
-                    }
-                } else {
-                    penalizacion += 30; // Distinto edificio: Penalización grave
-                }
-            }
-        }
-        return penalizacion;
-    }*/
-
-    /*private double calcularDistanciaSoft(HorarioDTO actual, List<HorarioDTO> todos, Map<Integer, Aula> aulas) {
-        double penalizacion = 0;
-        for (HorarioDTO otro : todos) {
-            if (otro == actual || otro.semestre != actual.semestre || otro.idAulaAsignada == null || !otro.dia.equals(actual.dia)) continue;
-
-            if (otro.horaFin == actual.horaInicio) {
-                Aula a1 = aulas.get(otro.idAulaAsignada);
-                Aula a2 = aulas.get(actual.idAulaAsignada);
-                penalizacion += OptimizationMetrics.calcularPenalizacionDistancia(a1.getEdificio(), a2.getEdificio());
-            }
-        }
-        return penalizacion;
-    }*/
 
     private boolean estaOcupada(int idAula, HorarioDTO actual, List<HorarioDTO> lista) {
         for (HorarioDTO h : lista) {

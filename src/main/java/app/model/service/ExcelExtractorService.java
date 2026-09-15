@@ -50,93 +50,102 @@ public class ExcelExtractorService {
                 String materiaFull = getCell(row, colMap.get("MATERIA"));
                 if (materiaFull.isEmpty()) continue;
 
-                // --- 2. EXTRAER DOCENTE (Corrección "Sin profesor") ---
-                String nombreProf = getCell(row, colMap.get("PROFESOR"));
-
-                // Forzamos que si viene vacío, dice "SIN PROFESOR", o espacios en blanco, se asigne exactamente "Sin profesor"
-                if (nombreProf.trim().isEmpty() || nombreProf.trim().equalsIgnoreCase("SIN PROFESOR")) {
-                    nombreProf = "Sin profesor";
-                }
-
-                int idDocente;
-                if (cacheDocentes.containsKey(nombreProf)) {
-                    idDocente = cacheDocentes.get(nombreProf);
-                } else {
-                    Docente d = new Docente();
-                    d.setNombre(nombreProf);
-                    d.setCualquierPizarra("si");
-                    idDocente = docenteDAO.insertarRetornandoId(d);
-                    cacheDocentes.put(nombreProf, idDocente);
-                }
-
-                // --- 3. EXTRAER MATERIA ---
-                String nombreMateria = materiaFull;
-                String codigoMateria = "";
-                Matcher matcher = Pattern.compile("(.*?)\\s*\\(([^)]+)\\)$").matcher(materiaFull);
-                if (matcher.find()) {
-                    nombreMateria = matcher.group(1).trim();
-                    codigoMateria = matcher.group(2).trim();
-                }
-
-                int idMateria;
-                if (cacheMaterias.containsKey(codigoMateria)) {
-                    idMateria = cacheMaterias.get(codigoMateria);
-                } else {
-                    Integer dbId = materiaDAO.buscarIdPorCodigoONombre(codigoMateria, nombreMateria);
-                    if (dbId != null) {
-                        idMateria = dbId;
-                    } else {
-                        int sem = 1;
-                        try { sem = Integer.parseInt(getCell(row, colMap.get("SEMESTRE"))); } catch(Exception ignored){}
-                        idMateria = materiaDAO.insertarMínimaRetornandoId(codigoMateria, nombreMateria, sem);
-                        logger.accept("  + Nueva materia registrada: " + codigoMateria);
-                    }
-                    cacheMaterias.put(codigoMateria, idMateria);
-                }
-
-                // --- 4. EXTRAER PARALELO ---
-                String nombreParalelo = getCell(row, colMap.get("PARALELO"));
-                if (nombreParalelo.isEmpty()) nombreParalelo = "S/N";
-
-                int estLegalizados = 0;
-                try { estLegalizados = (int) Double.parseDouble(getCell(row, colMap.get("ESTLEGALIZADOS"))); } catch(Exception ignored){}
-
-                String keyParalelo = idMateria + "_" + idDocente + "_" + nombreParalelo;
-                int idParalelo;
-
-                if (cacheParalelos.containsKey(keyParalelo)) {
-                    idParalelo = cacheParalelos.get(keyParalelo);
-                } else {
-                    idParalelo = paraleloDAO.insertarRetornandoId(nombreParalelo, estLegalizados, idMateria, idDocente);
-                    cacheParalelos.put(keyParalelo, idParalelo);
-                }
-
-                // --- 5. EXTRAER AULA (Match Inteligente) ---
-                String textoAula = getCell(row, colMap.get("AULA"));
-                Integer idAula = aulaDAO.buscarAulaInteligente(textoAula);
-
-                // --- 6. EXTRAER HORARIOS ---
-                String[] dias = {"LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"};
-                for (String diaStr : dias) {
-                    Integer idxDia = colMap.get(diaStr);
-                    if (idxDia == null) continue;
-
-                    String horas = getCell(row, idxDia);
-                    if (!horas.isEmpty()) {
-                        Matcher m = Pattern.compile("(\\d+)\\s*-\\s*(\\d+)").matcher(horas);
-                        while (m.find()) {
-                            Horario h = new Horario();
-                            h.setDia(diaStr.toLowerCase());
-                            h.setHoraInicio(Integer.parseInt(m.group(1)));
-                            h.setHoraFin(Integer.parseInt(m.group(2)));
-                            h.setIdParalelo(idParalelo);
-                            h.setIdAula(idAula);
-                            horarioDAO.insertar(h);
-                        }
-                    }
-                }
+                int idDocente = extraerDocente(row, colMap, cacheDocentes);
+                int idMateria = extraerMateria(row, colMap, cacheMaterias, materiaFull, logger);
+                int idParalelo = extraerParalelo(row, colMap, cacheParalelos, idMateria, idDocente);
+                Integer idAula = extraerAula(row, colMap);
+                extraerHorarios(row, colMap, idParalelo, idAula);
             }
             logger.accept(">> INYECCIÓN DE DATOS FINALIZADA EXISTOSAMENTE.");
+        }
+    }
+
+    private int extraerDocente(Row row, Map<String, Integer> colMap, Map<String, Integer> cacheDocentes) throws Exception {
+        String nombreProf = getCell(row, colMap.get("PROFESOR"));
+        if (nombreProf.trim().isEmpty() || nombreProf.trim().equalsIgnoreCase("SIN PROFESOR")) {
+            nombreProf = "Sin profesor";
+        }
+
+        if (cacheDocentes.containsKey(nombreProf)) {
+            return cacheDocentes.get(nombreProf);
+        } else {
+            Docente d = new Docente();
+            d.setNombre(nombreProf);
+            d.setCualquierPizarra("si");
+            int idDocente = docenteDAO.insertarRetornandoId(d);
+            cacheDocentes.put(nombreProf, idDocente);
+            return idDocente;
+        }
+    }
+
+    private int extraerMateria(Row row, Map<String, Integer> colMap, Map<String, Integer> cacheMaterias, String materiaFull, Consumer<String> logger) throws Exception {
+        String nombreMateria = materiaFull;
+        String codigoMateria = "";
+        Matcher matcher = Pattern.compile("(.*?)\\s*\\(([^)]+)\\)$").matcher(materiaFull);
+        if (matcher.find()) {
+            nombreMateria = matcher.group(1).trim();
+            codigoMateria = matcher.group(2).trim();
+        }
+
+        if (cacheMaterias.containsKey(codigoMateria)) {
+            return cacheMaterias.get(codigoMateria);
+        } else {
+            Integer dbId = materiaDAO.buscarIdPorCodigoONombre(codigoMateria, nombreMateria);
+            int idMateria;
+            if (dbId != null) {
+                idMateria = dbId;
+            } else {
+                int sem = 1;
+                try { sem = Integer.parseInt(getCell(row, colMap.get("SEMESTRE"))); } catch(Exception ignored){}
+                idMateria = materiaDAO.insertarMínimaRetornandoId(codigoMateria, nombreMateria, sem);
+                logger.accept("  + Nueva materia registrada: " + codigoMateria);
+            }
+            cacheMaterias.put(codigoMateria, idMateria);
+            return idMateria;
+        }
+    }
+
+    private int extraerParalelo(Row row, Map<String, Integer> colMap, Map<String, Integer> cacheParalelos, int idMateria, int idDocente) throws Exception {
+        String nombreParalelo = getCell(row, colMap.get("PARALELO"));
+        if (nombreParalelo.isEmpty()) nombreParalelo = "S/N";
+
+        int estLegalizados = 0;
+        try { estLegalizados = (int) Double.parseDouble(getCell(row, colMap.get("ESTLEGALIZADOS"))); } catch(Exception ignored){}
+
+        String keyParalelo = idMateria + "_" + idDocente + "_" + nombreParalelo;
+        if (cacheParalelos.containsKey(keyParalelo)) {
+            return cacheParalelos.get(keyParalelo);
+        } else {
+            int idParalelo = paraleloDAO.insertarRetornandoId(nombreParalelo, estLegalizados, idMateria, idDocente);
+            cacheParalelos.put(keyParalelo, idParalelo);
+            return idParalelo;
+        }
+    }
+
+    private Integer extraerAula(Row row, Map<String, Integer> colMap) throws Exception {
+        String textoAula = getCell(row, colMap.get("AULA"));
+        return aulaDAO.buscarAulaInteligente(textoAula);
+    }
+
+    private void extraerHorarios(Row row, Map<String, Integer> colMap, int idParalelo, Integer idAula) throws Exception {
+        String[] dias = {"LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"};
+        for (String diaStr : dias) {
+            Integer idxDia = colMap.get(diaStr);
+            if (idxDia == null) continue;
+
+            String horas = getCell(row, idxDia);
+            if (!horas.isEmpty()) {
+                Matcher m = Pattern.compile("(\\d+)\\s*-\\s*(\\d+)").matcher(horas);
+                while (m.find()) {
+                    Horario h = new Horario();
+                    h.setDia(diaStr.toLowerCase());
+                    h.setHoraInicio(Integer.parseInt(m.group(1)));
+                    h.setHoraFin(Integer.parseInt(m.group(2)));
+                    h.setIdParalelo(idParalelo);
+                    h.setIdAula(idAula);
+                    horarioDAO.insertar(h);
+                }
+            }
         }
     }
 
