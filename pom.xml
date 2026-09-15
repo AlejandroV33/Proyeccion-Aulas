@@ -107,13 +107,12 @@
             </dependencies>
         </profile>
 
-        <!-- Ubuntu / Linux x86_64 -->
+        <!-- Ubuntu / Linux -->
         <profile>
             <id>linux</id>
             <activation>
                 <os>
                     <family>unix</family>
-                    <arch>x86_64</arch>
                 </os>
             </activation>
             <dependencies>
@@ -132,13 +131,12 @@
             </dependencies>
         </profile>
 
-        <!-- Windows x86_64 -->
+        <!-- Windows -->
         <profile>
             <id>windows</id>
             <activation>
                 <os>
                     <family>windows</family>
-                    <arch>x86_64</arch>
                 </os>
             </activation>
             <dependencies>
