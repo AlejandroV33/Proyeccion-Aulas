@@ -71,7 +71,7 @@ public class ExcelPrepararService {
         Row headerRow = ws.getRow(0);
         headerRow.getCell(colSemIdx).setCellValue("Semestre");
         CellStyle estiloSem = wb.createCellStyle();
-        XSSFFont fuente = wb.createFont();
+        Font fuente = wb.createFont();
         fuente.setFontName("Verdana"); fuente.setFontHeightInPoints((short)4);
         estiloSem.setFont(fuente);
         estiloSem.setBorderTop(BorderStyle.THIN); estiloSem.setBorderBottom(BorderStyle.THIN);
