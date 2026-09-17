@@ -9,6 +9,7 @@ public class Aula {
     private String estado;
     private String disponibilidad;
     private int idTipoAula;
+    private String tipoAula;
 
     public Aula() {}
 
@@ -53,12 +54,11 @@ public class Aula {
     public int getIdTipoAula() { return idTipoAula; }
     public void setIdTipoAula(int idTipoAula) { this.idTipoAula = idTipoAula; }
 
+    public String getTipoAula() { return tipoAula; }
+    public void setTipoAula(String tipoAula) { this.tipoAula = tipoAula; }
+
     @Override
     public String toString() {
-        /*// Si es el objeto fantasma (ID 0), mostramos el texto especial
-        if (id == 0) return "--- SIN AULA ---";*/
-
-        // Formato visual normal: E17/P2/E004 (40)
         return edificio + "/" + piso + "/" + numero + " (" + capacidad + ")";
     }
 }

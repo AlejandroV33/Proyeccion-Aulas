@@ -5,12 +5,16 @@ public class Paralelo {
     private String nombre;
     private int numEstudiantesMatriculados;
     private int idMateria; // fk
-    private int idDocente; // fk
+    private Integer idDocente; // fk, allow null
     private String espejo; // 'si', 'no', 'indiferente'
+    
+    // Virtual fields from joins
+    private String materia;
+    private String docente;
 
     public Paralelo() {}
 
-    public Paralelo(int id, String nombre, int numEstudiantesMatriculados, int idMateria, int idDocente, String espejo) {
+    public Paralelo(int id, String nombre, int numEstudiantesMatriculados, int idMateria, Integer idDocente, String espejo) {
         this.id = id;
         this.nombre = nombre;
         this.numEstudiantesMatriculados = numEstudiantesMatriculados;
@@ -31,9 +35,26 @@ public class Paralelo {
     public int getIdMateria() { return idMateria; }
     public void setIdMateria(int idMateria) { this.idMateria = idMateria; }
 
-    public int getIdDocente() { return idDocente; }
-    public void setIdDocente(int idDocente) { this.idDocente = idDocente; }
+    public Integer getIdDocente() { return idDocente; }
+    public void setIdDocente(Integer idDocente) { this.idDocente = idDocente; }
 
     public String getEspejo() { return espejo; }
     public void setEspejo(String espejo) { this.espejo = espejo; }
+    
+    public String getMateria() { return materia; }
+    public void setMateria(String materia) { this.materia = materia; }
+    
+    public String getDocente() { return docente; }
+    public void setDocente(String docente) { this.docente = docente; }
+    
+    // Helper para tablas o combos
+    public int getNumEstudiantes() { return numEstudiantesMatriculados; }
+
+    @Override
+    public String toString() {
+        if (materia != null) {
+            return materia + " - " + nombre + " (" + (docente != null ? docente : "Sin Docente") + ")";
+        }
+        return nombre;
+    }
 }

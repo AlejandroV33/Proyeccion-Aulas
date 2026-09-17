@@ -1,22 +1,32 @@
 package app.model.dao;
 
+import app.exception.DatabaseException;
 import app.model.entity.Materia;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.JOptionPane;
 
 public class MateriaDAO extends BaseDAO {
 
+    private static final String SQL_SELECT_ALL = "SELECT * FROM materias ORDER BY nombre";
+    private static final String SQL_SELECT_WITH_TIPO = "SELECT m.*, t.nombre as tipo_req FROM materias m LEFT JOIN tipos_aulas t ON m.aula_requerida = t.id ORDER BY m.nombre";
+    private static final String SQL_INSERT = "INSERT INTO materias (codigo, nombre, departamento, creditos, horas, semestre, aula_requerida) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    private static final String SQL_UPDATE = "UPDATE materias SET codigo=?, nombre=?, departamento=?, creditos=?, horas=?, semestre=?, aula_requerida=? WHERE id=?";
+    private static final String SQL_DELETE = "DELETE FROM materias WHERE id = ?";
+    private static final String SQL_SEARCH_ID = "SELECT id FROM materias WHERE codigo = ? OR nombre = ? LIMIT 1";
+    private static final String SQL_INSERT_MIN = "INSERT INTO materias (codigo, nombre, departamento, creditos, horas, semestre, aula_requerida) VALUES (?, ?, 'S/D', 3, 6, ?, 1)";
+
+    // UI specific queries
+    private static final String SQL_INSERT_BASIC = "INSERT INTO materias (codigo, nombre, semestre, departamento, creditos, horas, aula_requerida) VALUES (?,?,?,?,?,?,?)";
+    private static final String SQL_UPDATE_BASIC = "UPDATE materias SET codigo=?, nombre=?, semestre=?, departamento=?, creditos=?, horas=?, aula_requerida=? WHERE id=?";
+
     public List<Materia> listar() {
         List<Materia> lista = new ArrayList<>();
-        String sql = "SELECT * FROM materias ORDER BY nombre";
-
-        try (PreparedStatement stmt = getConnection().prepareStatement(sql);
+        try (PreparedStatement stmt = getConnection().prepareStatement(SQL_SELECT_ALL);
              ResultSet rs = stmt.executeQuery()) {
-
             while (rs.next()) {
                 lista.add(new Materia(
                         rs.getInt("id"),
@@ -30,15 +40,13 @@ public class MateriaDAO extends BaseDAO {
                 ));
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "error al listar materias: " + e.getMessage());
+            throw new DatabaseException("Error al listar materias: " + e.getMessage(), e);
         }
         return lista;
     }
 
     public void insertar(Materia materia) {
-        String sql = "INSERT INTO materias (codigo, nombre, departamento, creditos, horas, semestre, aula_requerida) VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-        try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {
+        try (PreparedStatement stmt = getConnection().prepareStatement(SQL_INSERT)) {
             stmt.setString(1, materia.getCodigo());
             stmt.setString(2, materia.getNombre());
             stmt.setString(3, materia.getDepartamento());
@@ -48,17 +56,12 @@ public class MateriaDAO extends BaseDAO {
             stmt.setInt(7, materia.getAulaRequerida());
             stmt.executeUpdate();
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "error al insertar materia: " + e.getMessage());
+            throw new DatabaseException("Error al insertar materia: " + e.getMessage(), e);
         }
     }
 
     public void actualizar(Materia materia) {
-        String sql = """
-            UPDATE materias SET codigo=?, nombre=?, departamento=?, creditos=?, horas=?, semestre=?, aula_requerida=?
-            WHERE id=?
-            """;
-
-        try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {
+        try (PreparedStatement stmt = getConnection().prepareStatement(SQL_UPDATE)) {
             stmt.setString(1, materia.getCodigo());
             stmt.setString(2, materia.getNombre());
             stmt.setString(3, materia.getDepartamento());
@@ -69,19 +72,18 @@ public class MateriaDAO extends BaseDAO {
             stmt.setInt(8, materia.getId());
             stmt.executeUpdate();
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "error al actualizar materia: " + e.getMessage());
+            throw new DatabaseException("Error al actualizar materia: " + e.getMessage(), e);
         }
     }
 
-    public java.util.List<app.model.entity.MateriaFila> listarTabla() {
-        java.util.List<app.model.entity.MateriaFila> lista = new java.util.ArrayList<>();
-        String sql = "SELECT m.*, t.nombre as tipo_req FROM materias m LEFT JOIN tipos_aulas t ON m.aula_requerida = t.id ORDER BY m.nombre";
-        try (java.sql.PreparedStatement stmt = getConnection().prepareStatement(sql);
-             java.sql.ResultSet rs = stmt.executeQuery()) {
+    public List<Materia> listarTabla() {
+        List<Materia> lista = new ArrayList<>();
+        try (PreparedStatement stmt = getConnection().prepareStatement(SQL_SELECT_WITH_TIPO);
+             ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                app.model.entity.MateriaFila m = new app.model.entity.MateriaFila();
+                Materia m = new Materia();
                 m.setId(rs.getInt("id"));
-                m.setCodigo(rs.getString("codigo")); // Añadido
+                m.setCodigo(rs.getString("codigo"));
                 m.setNombre(rs.getString("nombre"));
                 m.setSemestre(rs.getInt("semestre"));
                 m.setDepartamento(rs.getString("departamento"));
@@ -91,16 +93,16 @@ public class MateriaDAO extends BaseDAO {
                 m.setTipoAulaReq(rs.getString("tipo_req"));
                 lista.add(m);
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            throw new DatabaseException("Error al listar tabla de materias", e);
+        }
         return lista;
     }
 
-    public void guardar(app.model.entity.MateriaFila m) {
+    public void guardar(Materia m) {
         boolean nuevo = m.getId() == 0;
-        // Ahora el SQL incluye TODOS los campos, incluyendo el código
-        String sql = nuevo ? "INSERT INTO materias (codigo, nombre, semestre, departamento, creditos, horas, aula_requerida) VALUES (?,?,?,?,?,?,?)"
-                : "UPDATE materias SET codigo=?, nombre=?, semestre=?, departamento=?, creditos=?, horas=?, aula_requerida=? WHERE id=?";
-        try (java.sql.PreparedStatement stmt = getConnection().prepareStatement(sql)) {
+        String sql = nuevo ? SQL_INSERT_BASIC : SQL_UPDATE_BASIC;
+        try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {
             stmt.setString(1, m.getCodigo());
             stmt.setString(2, m.getNombre());
             stmt.setInt(3, m.getSemestre());
@@ -110,34 +112,45 @@ public class MateriaDAO extends BaseDAO {
             stmt.setInt(7, m.getIdTipoAulaReq());
             if (!nuevo) stmt.setInt(8, m.getId());
             stmt.executeUpdate();
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            throw new DatabaseException("Error al guardar materia", e);
+        }
     }
 
     public void eliminar(int id) {
-        String sql = "DELETE FROM materias WHERE id = ?";
-        try (java.sql.PreparedStatement stmt = getConnection().prepareStatement(sql)) { stmt.setInt(1, id); stmt.executeUpdate(); } catch (Exception e) { e.printStackTrace(); }
+        try (PreparedStatement stmt = getConnection().prepareStatement(SQL_DELETE)) { 
+            stmt.setInt(1, id); 
+            stmt.executeUpdate(); 
+        } catch (SQLException e) { 
+            throw new DatabaseException("Error al eliminar materia", e);
+        }
     }
 
     public Integer buscarIdPorCodigoONombre(String codigo, String nombre) {
-        String sql = "SELECT id FROM materias WHERE codigo = ? OR nombre = ? LIMIT 1";
-        try (java.sql.PreparedStatement stmt = getConnection().prepareStatement(sql)) {
-            stmt.setString(1, codigo); stmt.setString(2, nombre);
-            try (java.sql.ResultSet rs = stmt.executeQuery()) {
+        try (PreparedStatement stmt = getConnection().prepareStatement(SQL_SEARCH_ID)) {
+            stmt.setString(1, codigo); 
+            stmt.setString(2, nombre);
+            try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) return rs.getInt("id");
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            throw new DatabaseException("Error al buscar materia por codigo o nombre", e);
+        }
         return null;
     }
 
     public int insertarMínimaRetornandoId(String codigo, String nombre, int semestre) {
-        String sql = "INSERT INTO materias (codigo, nombre, departamento, creditos, horas, semestre, aula_requerida) VALUES (?, ?, 'S/D', 3, 6, ?, 1)";
-        try (java.sql.PreparedStatement stmt = getConnection().prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, codigo); stmt.setString(2, nombre); stmt.setInt(3, semestre);
+        try (PreparedStatement stmt = getConnection().prepareStatement(SQL_INSERT_MIN, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, codigo); 
+            stmt.setString(2, nombre); 
+            stmt.setInt(3, semestre);
             stmt.executeUpdate();
-            try (java.sql.ResultSet rs = stmt.getGeneratedKeys()) {
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next()) return rs.getInt(1);
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            throw new DatabaseException("Error al insertar materia mínima", e);
+        }
         return -1;
     }
 }

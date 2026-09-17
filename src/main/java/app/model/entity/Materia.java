@@ -8,11 +8,12 @@ public class Materia {
     private int creditos;
     private int horas;
     private int semestre;
-    private int aulaRequerida; // fk id_tipo_aula
+    private int idTipoAulaReq;
+    private String tipoAulaReq; // Nombre del tipo
 
     public Materia() {}
 
-    public Materia(int id, String codigo, String nombre, String departamento, int creditos, int horas, int semestre, int aulaRequerida) {
+    public Materia(int id, String codigo, String nombre, String departamento, int creditos, int horas, int semestre, int idTipoAulaReq) {
         this.id = id;
         this.codigo = codigo;
         this.nombre = nombre;
@@ -20,7 +21,7 @@ public class Materia {
         this.creditos = creditos;
         this.horas = horas;
         this.semestre = semestre;
-        this.aulaRequerida = aulaRequerida;
+        this.idTipoAulaReq = idTipoAulaReq;
     }
 
     public int getId() { return id; }
@@ -44,8 +45,14 @@ public class Materia {
     public int getSemestre() { return semestre; }
     public void setSemestre(int semestre) { this.semestre = semestre; }
 
-    public int getAulaRequerida() { return aulaRequerida; }
-    public void setAulaRequerida(int aulaRequerida) { this.aulaRequerida = aulaRequerida; }
+    public int getIdTipoAulaReq() { return idTipoAulaReq; }
+    public void setIdTipoAulaReq(int idTipoAulaReq) { this.idTipoAulaReq = idTipoAulaReq; }
+
+    public int getAulaRequerida() { return idTipoAulaReq; }
+    public void setAulaRequerida(int aulaRequerida) { this.idTipoAulaReq = aulaRequerida; }
+
+    public String getTipoAulaReq() { return tipoAulaReq; }
+    public void setTipoAulaReq(String tipoAulaReq) { this.tipoAulaReq = tipoAulaReq; }
 
     @Override
     public String toString() {

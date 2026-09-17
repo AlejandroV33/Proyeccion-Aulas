@@ -4,12 +4,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import javax.swing.JOptionPane;
 import java.io.File;
 import java.io.InputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
+import app.exception.DatabaseException;
 
 public class DatabaseConnection {
 
@@ -18,7 +17,6 @@ public class DatabaseConnection {
     private static Connection instance;
 
     private static void copyDatabaseIfNotExists(File databaseFile) {
-
         if (databaseFile.exists()) {
             return;
         }
@@ -36,34 +34,24 @@ public class DatabaseConnection {
             while ((length = is.read(buffer)) > 0) {
                 fos.write(buffer, 0, length);
             }
-
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(null,
-                    "Error copiando la base de datos inicial: " + e.getMessage(),
-                    "Error de base de datos",
-                    JOptionPane.ERROR_MESSAGE);
+            throw new DatabaseException("Error copiando la base de datos inicial: " + e.getMessage(), e);
         }
     }
 
     private static synchronized Connection connect() {
-
         try {
-            //Obtener el directorio home del usuario (multiplataforma)
             String userHome = System.getProperty("user.home");
-
             File appDirectory = new File(userHome, APP_FOLDER);
 
             if (!appDirectory.exists()) {
                 boolean created = appDirectory.mkdirs();
                 if (!created) {
-                    JOptionPane.showMessageDialog(null, "No se pudo crear el directorio de la aplicacion" , "Error de directorio", JOptionPane.ERROR_MESSAGE);
-                    return null;
+                    throw new DatabaseException("No se pudo crear el directorio de la aplicacion");
                 }
             }
 
             File databaseFile = new File(appDirectory, DB_NAME);
-
-            // Copiar base inicial desde resources si no existe
             copyDatabaseIfNotExists(databaseFile);
             String url = "jdbc:sqlite:" + databaseFile.getAbsolutePath();
 
@@ -71,30 +59,25 @@ public class DatabaseConnection {
             try (Statement stmt = conn.createStatement()) {
                 stmt.execute("PRAGMA foreign_keys = ON;");
             }
-
             return conn;
-
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error de conexión a la base de datos: " + e.getMessage(), "Error de conexión", JOptionPane.ERROR_MESSAGE);
-            return null;
+            throw new DatabaseException("Error de conexión a la base de datos", e);
         } catch (SecurityException e) {
-            JOptionPane.showMessageDialog(null, "Permisos insuficientes para crear/directorio de la aplicación: " + e.getMessage(), "Error de permisos", JOptionPane.ERROR_MESSAGE);
-            return null;
-        } catch (Exception e) {
-            // Captura cualquier otra excepción inesperada
-            JOptionPane.showMessageDialog(null, "Error inesperado al conectar con la base de datos: " + e.getMessage(), "Error inesperado", JOptionPane.ERROR_MESSAGE);
-            return null;
+            throw new DatabaseException("Permisos insuficientes para crear el directorio de la aplicación", e);
         }
     }
 
     public static Connection getConnection() {
-        try {
-            if (instance == null || instance.isClosed()) {
-                instance = connect();
+        if (instance != null) {
+            try {
+                if (!instance.isClosed()) {
+                    return instance;
+                }
+            } catch (SQLException e) {
+                // Ignore and reconnect
             }
-        } catch (SQLException e) {
-            instance = connect();
         }
+        instance = connect();
         return instance;
     }
 
@@ -244,7 +227,7 @@ public class DatabaseConnection {
             stmt.execute(sqlVistaResultadoFinal);
 
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "error al iniciar base de datos: " + e.getMessage(), "Error de base de datos", JOptionPane.ERROR_MESSAGE);
+            throw new DatabaseException("Error al iniciar base de datos: " + e.getMessage(), e);
         }
     }
 }

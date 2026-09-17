@@ -2,7 +2,7 @@ package app.controller.gestion;
 
 import app.model.dao.MateriaDAO;
 import app.model.dao.TipoAulaDAO;
-import app.model.entity.MateriaFila;
+import app.model.entity.Materia;
 import app.model.entity.TipoAula;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -20,14 +20,14 @@ import javafx.scene.layout.GridPane;
 public class MateriaTabController {
 
     private TextField txtBuscarMateriaNom;
-    private TableView<MateriaFila> tablaMaterias;
-    private TableColumn<MateriaFila, String> colMatCodigo, colMatNombre, colMatDepto, colMatTipo;
-    private TableColumn<MateriaFila, Integer> colMatSemestre, colMatCreditos, colMatHoras;
+    private TableView<Materia> tablaMaterias;
+    private TableColumn<Materia, String> colMatCodigo, colMatNombre, colMatDepto, colMatTipo;
+    private TableColumn<Materia, Integer> colMatSemestre, colMatCreditos, colMatHoras;
 
     private final MateriaDAO materiaDAO;
     private final TipoAulaDAO tipoAulaDAO;
-    private final ObservableList<MateriaFila> masterMaterias = FXCollections.observableArrayList();
-    private FilteredList<MateriaFila> filteredMaterias;
+    private final ObservableList<Materia> masterMaterias = FXCollections.observableArrayList();
+    private FilteredList<Materia> filteredMaterias;
     private Runnable onDataChanged;
 
     public MateriaTabController(MateriaDAO materiaDAO, TipoAulaDAO tipoAulaDAO) {
@@ -36,14 +36,14 @@ public class MateriaTabController {
     }
 
     public void inicializar(TextField txtBuscarMateriaNom,
-                            TableView<MateriaFila> tablaMaterias,
-                            TableColumn<MateriaFila, String> colMatCodigo,
-                            TableColumn<MateriaFila, String> colMatNombre,
-                            TableColumn<MateriaFila, String> colMatDepto,
-                            TableColumn<MateriaFila, String> colMatTipo,
-                            TableColumn<MateriaFila, Integer> colMatSemestre,
-                            TableColumn<MateriaFila, Integer> colMatCreditos,
-                            TableColumn<MateriaFila, Integer> colMatHoras,
+                            TableView<Materia> tablaMaterias,
+                            TableColumn<Materia, String> colMatCodigo,
+                            TableColumn<Materia, String> colMatNombre,
+                            TableColumn<Materia, String> colMatDepto,
+                            TableColumn<Materia, String> colMatTipo,
+                            TableColumn<Materia, Integer> colMatSemestre,
+                            TableColumn<Materia, Integer> colMatCreditos,
+                            TableColumn<Materia, Integer> colMatHoras,
                             Runnable onDataChanged) {
         this.txtBuscarMateriaNom = txtBuscarMateriaNom;
         this.tablaMaterias = tablaMaterias;
@@ -88,10 +88,10 @@ public class MateriaTabController {
     }
 
     public void abrirModalNueva() {
-        abrirEditor(new MateriaFila());
+        abrirEditor(new Materia());
     }
 
-    private void abrirEditor(MateriaFila m) {
+    private void abrirEditor(Materia m) {
         Dialog<Boolean> dialog = new Dialog<>();
         dialog.setTitle(m.getId() == 0 ? "Nueva Materia" : "Editar Materia");
 
@@ -161,7 +161,7 @@ public class MateriaTabController {
     }
 
     public void eliminar() {
-        MateriaFila s = tablaMaterias.getSelectionModel().getSelectedItem();
+        Materia s = tablaMaterias.getSelectionModel().getSelectedItem();
         if (s == null) return;
 
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION,

@@ -5,7 +5,7 @@ import app.model.dao.MateriaDAO;
 import app.model.dao.ParaleloDAO;
 import app.model.entity.Docente;
 import app.model.entity.Materia;
-import app.model.entity.ParaleloFila;
+import app.model.entity.Paralelo;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -23,9 +23,9 @@ import javafx.scene.layout.HBox;
 public class ParaleloTabController {
 
     private TextField txtBuscarParaleloMat, txtBuscarParaleloDoc, txtBuscarParaleloNom;
-    private TableView<ParaleloFila> tablaParalelos;
-    private TableColumn<ParaleloFila, String> colParaleloMat, colParaleloDoc, colParaleloNom;
-    private TableColumn<ParaleloFila, Integer> colParaleloEst;
+    private TableView<Paralelo> tablaParalelos;
+    private TableColumn<Paralelo, String> colParaleloMat, colParaleloDoc, colParaleloNom;
+    private TableColumn<Paralelo, Integer> colParaleloEst;
 
     private TabPane tabPaneEdicion;
     private Tab tabMaterias;
@@ -34,8 +34,8 @@ public class ParaleloTabController {
     private final MateriaDAO materiaDAO;
     private final DocenteDAO docenteDAO;
 
-    private final ObservableList<ParaleloFila> masterParalelos = FXCollections.observableArrayList();
-    private FilteredList<ParaleloFila> filteredParalelos;
+    private final ObservableList<Paralelo> masterParalelos = FXCollections.observableArrayList();
+    private FilteredList<Paralelo> filteredParalelos;
     private Runnable onDataChanged;
 
     public ParaleloTabController(ParaleloDAO paraleloDAO, MateriaDAO materiaDAO, DocenteDAO docenteDAO) {
@@ -47,11 +47,11 @@ public class ParaleloTabController {
     public void inicializar(TextField txtBuscarParaleloMat,
                             TextField txtBuscarParaleloDoc,
                             TextField txtBuscarParaleloNom,
-                            TableView<ParaleloFila> tablaParalelos,
-                            TableColumn<ParaleloFila, String> colParaleloMat,
-                            TableColumn<ParaleloFila, String> colParaleloDoc,
-                            TableColumn<ParaleloFila, String> colParaleloNom,
-                            TableColumn<ParaleloFila, Integer> colParaleloEst,
+                            TableView<Paralelo> tablaParalelos,
+                            TableColumn<Paralelo, String> colParaleloMat,
+                            TableColumn<Paralelo, String> colParaleloDoc,
+                            TableColumn<Paralelo, String> colParaleloNom,
+                            TableColumn<Paralelo, Integer> colParaleloEst,
                             TabPane tabPaneEdicion,
                             Tab tabMaterias,
                             Runnable onDataChanged) {
@@ -110,10 +110,10 @@ public class ParaleloTabController {
     }
 
     public void abrirModalNuevo() {
-        abrirEditor(new ParaleloFila());
+        abrirEditor(new Paralelo());
     }
 
-    private void abrirEditor(ParaleloFila p) {
+    private void abrirEditor(Paralelo p) {
         boolean esNuevo = p.getId() == 0;
         Dialog<Boolean> dialog = new Dialog<>();
         dialog.setTitle(esNuevo ? "Registrar Nuevo Paralelo" : "Editar Paralelo");
@@ -167,7 +167,7 @@ public class ParaleloTabController {
         dialog.setResultConverter(btn -> {
             if (btn == ButtonType.OK && comboMat.getValue() != null && !txtNombre.getText().trim().isEmpty()) {
                 p.setNombre(txtNombre.getText().trim().toUpperCase());
-                p.setNumEstudiantes(spinEst.getValue());
+                p.setNumEstudiantesMatriculados(spinEst.getValue());
                 p.setIdMateria(comboMat.getValue().getId());
                 p.setIdDocente(comboDoc.getValue() != null ? comboDoc.getValue().getId() : null);
                 paraleloDAO.guardar(p);
@@ -185,7 +185,7 @@ public class ParaleloTabController {
     }
 
     public void eliminar() {
-        ParaleloFila selec = tablaParalelos.getSelectionModel().getSelectedItem();
+        Paralelo selec = tablaParalelos.getSelectionModel().getSelectedItem();
         if (selec == null) {
             new Alert(Alert.AlertType.WARNING, "Seleccione un paralelo de la tabla.").show();
             return;

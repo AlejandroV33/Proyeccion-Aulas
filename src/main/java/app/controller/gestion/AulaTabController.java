@@ -2,7 +2,7 @@ package app.controller.gestion;
 
 import app.model.dao.AulaDAO;
 import app.model.dao.TipoAulaDAO;
-import app.model.entity.AulaFila;
+import app.model.entity.Aula;
 import app.model.entity.TipoAula;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -22,14 +22,14 @@ import java.util.List;
 public class AulaTabController {
 
     private TextField txtBuscarAula;
-    private TableView<AulaFila> tablaAulas;
-    private TableColumn<AulaFila, String> colAulEdificio, colAulPiso, colAulNumero, colAulTipo, colAulEstado;
-    private TableColumn<AulaFila, Integer> colAulCapacidad;
+    private TableView<Aula> tablaAulas;
+    private TableColumn<Aula, String> colAulEdificio, colAulPiso, colAulNumero, colAulTipo, colAulEstado;
+    private TableColumn<Aula, Integer> colAulCapacidad;
 
     private final AulaDAO aulaDAO;
     private final TipoAulaDAO tipoAulaDAO;
-    private final ObservableList<AulaFila> masterAulas = FXCollections.observableArrayList();
-    private FilteredList<AulaFila> filteredAulas;
+    private final ObservableList<Aula> masterAulas = FXCollections.observableArrayList();
+    private FilteredList<Aula> filteredAulas;
     private Runnable onDataChanged;
 
     public AulaTabController(AulaDAO aulaDAO, TipoAulaDAO tipoAulaDAO) {
@@ -38,13 +38,13 @@ public class AulaTabController {
     }
 
     public void inicializar(TextField txtBuscarAula,
-                            TableView<AulaFila> tablaAulas,
-                            TableColumn<AulaFila, String> colAulEdificio,
-                            TableColumn<AulaFila, String> colAulPiso,
-                            TableColumn<AulaFila, String> colAulNumero,
-                            TableColumn<AulaFila, Integer> colAulCapacidad,
-                            TableColumn<AulaFila, String> colAulTipo,
-                            TableColumn<AulaFila, String> colAulEstado,
+                            TableView<Aula> tablaAulas,
+                            TableColumn<Aula, String> colAulEdificio,
+                            TableColumn<Aula, String> colAulPiso,
+                            TableColumn<Aula, String> colAulNumero,
+                            TableColumn<Aula, Integer> colAulCapacidad,
+                            TableColumn<Aula, String> colAulTipo,
+                            TableColumn<Aula, String> colAulEstado,
                             Runnable onDataChanged) {
         this.txtBuscarAula = txtBuscarAula;
         this.tablaAulas = tablaAulas;
@@ -83,7 +83,7 @@ public class AulaTabController {
         });
 
         // Vincular ordenamiento con encabezados de columnas
-        SortedList<AulaFila> sortedData = new SortedList<>(filteredAulas);
+        SortedList<Aula> sortedData = new SortedList<>(filteredAulas);
         sortedData.comparatorProperty().bind(tablaAulas.comparatorProperty());
         tablaAulas.setItems(sortedData);
 
@@ -100,7 +100,7 @@ public class AulaTabController {
     }
 
     public void cargarDatos() {
-        List<AulaFila> lista = aulaDAO.listarTabla();
+        List<Aula> lista = aulaDAO.listarTabla();
 
         // Ordenamiento por defecto: Edificio -> Piso -> Número
         lista.sort((a, b) -> {
@@ -117,10 +117,10 @@ public class AulaTabController {
     }
 
     public void abrirModalNueva() {
-        abrirEditor(new AulaFila());
+        abrirEditor(new Aula());
     }
 
-    private void abrirEditor(AulaFila a) {
+    private void abrirEditor(Aula a) {
         Dialog<Boolean> dialog = new Dialog<>();
         dialog.setTitle(a.getId() == 0 ? "Nueva Aula" : "Editar Aula");
 
@@ -186,7 +186,7 @@ public class AulaTabController {
     }
 
     public void eliminar() {
-        AulaFila s = tablaAulas.getSelectionModel().getSelectedItem();
+        Aula s = tablaAulas.getSelectionModel().getSelectedItem();
         if (s == null) return;
 
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION,

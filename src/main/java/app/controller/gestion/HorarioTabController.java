@@ -6,7 +6,7 @@ import app.model.dao.ParaleloDAO;
 import app.model.entity.Aula;
 import app.model.entity.Horario;
 import app.model.entity.HorarioFila;
-import app.model.entity.ParaleloDetalle;
+import app.model.entity.Paralelo;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -42,7 +42,7 @@ public class HorarioTabController {
     private final ParaleloDAO paraleloDAO;
 
     private List<Aula> todasLasAulasCache;
-    private List<ParaleloDetalle> todosParalelosCache;
+    private List<Paralelo> todosParalelosCache;
 
     private final ObservableList<HorarioFila> masterData = FXCollections.observableArrayList();
     private FilteredList<HorarioFila> filteredData;
@@ -226,7 +226,7 @@ public class HorarioTabController {
         // 1. Buscador Paralelo
         TextField txtFiltroParalelo = new TextField();
         txtFiltroParalelo.setPromptText("Filtrar materia o docente...");
-        ComboBox<ParaleloDetalle> comboParalelos = new ComboBox<>();
+        ComboBox<Paralelo> comboParalelos = new ComboBox<>();
         comboParalelos.setPrefWidth(300);
         llenarComboParalelos(comboParalelos, "");
         txtFiltroParalelo.textProperty().addListener((obs, oldV, newV) ->
@@ -434,8 +434,8 @@ public class HorarioTabController {
         combo.setButtonCell(cellFactory.call(null));
     }
 
-    private void llenarComboParalelos(ComboBox<ParaleloDetalle> combo, String filtro) {
-        List<ParaleloDetalle> filtradas = todosParalelosCache.stream()
+    private void llenarComboParalelos(ComboBox<Paralelo> combo, String filtro) {
+        List<Paralelo> filtradas = todosParalelosCache.stream()
                 .filter(p -> filtro.isEmpty()
                         || p.getMateria().toLowerCase().contains(filtro)
                         || (p.getDocente() != null && p.getDocente().toLowerCase().contains(filtro)))

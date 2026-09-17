@@ -26,17 +26,17 @@ public class GestionController {
     @FXML private TableColumn<HorarioFila, Integer> colMatriculados, colCapacidad;
 
     // PARALELOS
-    @FXML private TableView<ParaleloFila> tablaParalelos;
-    @FXML private TableColumn<ParaleloFila, String> colParaleloMat, colParaleloDoc, colParaleloNom;
-    @FXML private TableColumn<ParaleloFila, Integer> colParaleloEst;
+    @FXML private TableView<Paralelo> tablaParalelos;
+    @FXML private TableColumn<Paralelo, String> colParaleloMat, colParaleloDoc, colParaleloNom;
+    @FXML private TableColumn<Paralelo, Integer> colParaleloEst;
     @FXML private TextField txtBuscarParaleloMat, txtBuscarParaleloDoc, txtBuscarParaleloNom;
 
     // MATERIAS
-    @FXML private TableColumn<MateriaFila, String> colMatCodigo;
+    @FXML private TableColumn<Materia, String> colMatCodigo;
     @FXML private TextField txtBuscarMateriaNom;
-    @FXML private TableView<MateriaFila> tablaMaterias;
-    @FXML private TableColumn<MateriaFila, String> colMatNombre, colMatDepto, colMatTipo;
-    @FXML private TableColumn<MateriaFila, Integer> colMatSemestre, colMatCreditos, colMatHoras;
+    @FXML private TableView<Materia> tablaMaterias;
+    @FXML private TableColumn<Materia, String> colMatNombre, colMatDepto, colMatTipo;
+    @FXML private TableColumn<Materia, Integer> colMatSemestre, colMatCreditos, colMatHoras;
 
     // DOCENTES
     @FXML private TextField txtBuscarDocenteNom;
@@ -45,9 +45,9 @@ public class GestionController {
 
     // AULAS
     @FXML private TextField txtBuscarAula;
-    @FXML private TableView<AulaFila> tablaAulas;
-    @FXML private TableColumn<AulaFila, String> colAulEdificio, colAulPiso, colAulNumero, colAulTipo, colAulEstado;
-    @FXML private TableColumn<AulaFila, Integer> colAulCapacidad;
+    @FXML private TableView<Aula> tablaAulas;
+    @FXML private TableColumn<Aula, String> colAulEdificio, colAulPiso, colAulNumero, colAulTipo, colAulEstado;
+    @FXML private TableColumn<Aula, Integer> colAulCapacidad;
 
     // TIPOS AULA
     @FXML private TableView<TipoAula> tablaTiposAulas;
