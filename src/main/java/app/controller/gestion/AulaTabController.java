@@ -187,19 +187,19 @@ public class AulaTabController {
 
     public void eliminar() {
         Aula s = tablaAulas.getSelectionModel().getSelectedItem();
-        if (s == null) return;
+        if (s == null) {
+            app.util.AlertUtil.mostrarAdvertencia("Seleccione un aula de la tabla.");
+            return;
+        }
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                "ADVERTENCIA️\nEstá a punto de eliminar '" + s.getNumero() + "' de Aulas.\n" +
-                        "Esto puede borrar en cascada otros registros relacionados. ¿Seguro?",
-                ButtonType.YES, ButtonType.NO);
+        boolean confirmar = app.util.AlertUtil.pedirConfirmacion("Confirmar Eliminacion", 
+                "ADVERTENCIA\nEsta a punto de eliminar el aula '" + s.getNumero() + "'.\n" +
+                "Esto puede borrar en cascada otros registros relacionados. ¿Seguro?");
 
-        alert.showAndWait().ifPresent(r -> {
-            if (r == ButtonType.YES) {
-                aulaDAO.eliminar(s.getId());
-                cargarDatos();
-                onDataChanged.run();
-            }
-        });
+        if (confirmar) {
+            aulaDAO.eliminar(s.getId());
+            cargarDatos();
+            onDataChanged.run();
+        }
     }
 }

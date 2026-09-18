@@ -162,20 +162,20 @@ public class MateriaTabController {
 
     public void eliminar() {
         Materia s = tablaMaterias.getSelectionModel().getSelectedItem();
-        if (s == null) return;
+        if (s == null) {
+            app.util.AlertUtil.mostrarAdvertencia("Seleccione una materia de la tabla.");
+            return;
+        }
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                "ADVERTENCIA️\nEstá a punto de eliminar '" + s.getNombre() + "' de Materias.\n" +
-                        "Esto puede borrar en cascada otros registros relacionados. ¿Seguro?",
-                ButtonType.YES, ButtonType.NO);
+        boolean confirmar = app.util.AlertUtil.pedirConfirmacion("Confirmar Eliminacion", 
+                "ADVERTENCIA\nEsta a punto de eliminar '" + s.getNombre() + "'.\n" +
+                "Esto borrara en cascada paralelos y horarios relacionados. ¿Seguro?");
 
-        alert.showAndWait().ifPresent(r -> {
-            if (r == ButtonType.YES) {
-                materiaDAO.eliminar(s.getId());
-                cargarDatos();
-                onDataChanged.run();
-            }
-        });
+        if (confirmar) {
+            materiaDAO.eliminar(s.getId());
+            cargarDatos();
+            onDataChanged.run();
+        }
     }
 
     private void configurarSpinnerFocusHack(Spinner<Integer> spinner) {

@@ -274,8 +274,7 @@ public class HorarioTabController {
                         null // null porque es un horario nuevo
                 );
                 if (choque != null) {
-                    new Alert(Alert.AlertType.WARNING,
-                            "¡Choque de Aula Detectado!\nEsa aula ya está ocupada:\n\n" + choque).showAndWait();
+                    app.util.AlertUtil.mostrarAdvertencia("¡Choque de Aula Detectado!\nEsa aula ya está ocupada:\n\n" + choque);
                     event.consume();
                 }
             }
@@ -339,19 +338,16 @@ public class HorarioTabController {
         grid.add(new Label("Aula:"), 0, 3);     grid.add(comboAulas, 1, 3);
 
         // Botón eliminar horario
-        Button btnEliminar = new Button("🗑 Eliminar este Horario");
+        Button btnEliminar = new Button(" Eliminar este Horario");
         btnEliminar.setStyle("-fx-background-color: #c0392b; -fx-text-fill: white;");
         btnEliminar.setOnAction(e -> {
-            Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-                    "¿Seguro que desea eliminar el horario de " + dia + "?",
-                    ButtonType.YES, ButtonType.NO);
-            conf.showAndWait().ifPresent(res -> {
-                if (res == ButtonType.YES) {
-                    horarioDAO.eliminar(h.getId());
-                    dialog.setResult(true);
-                    dialog.close();
-                }
-            });
+            boolean confirmar = app.util.AlertUtil.pedirConfirmacion("Eliminar Horario", 
+                    "¿Seguro que desea eliminar el horario de " + dia + "?");
+            if (confirmar) {
+                horarioDAO.eliminar(h.getId());
+                dialog.setResult(true);
+                dialog.close();
+            }
         });
         grid.add(btnEliminar, 0, 4, 2, 1);
 
@@ -370,8 +366,7 @@ public class HorarioTabController {
                         h.getId() // Excluir su propio ID para no "chocar consigo mismo"
                 );
                 if (choque != null) {
-                    new Alert(Alert.AlertType.WARNING,
-                            "¡Choque de Aula Detectado!\nEsa aula ya está ocupada:\n\n" + choque).showAndWait();
+                    app.util.AlertUtil.mostrarAdvertencia("¡Choque de Aula Detectado!\nEsa aula ya está ocupada:\n\n" + choque);
                     event.consume();
                 }
             }

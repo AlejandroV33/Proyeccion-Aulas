@@ -109,19 +109,19 @@ public class DocenteTabController {
 
     public void eliminar() {
         Docente s = tablaDocentes.getSelectionModel().getSelectedItem();
-        if (s == null) return;
+        if (s == null) {
+            app.util.AlertUtil.mostrarAdvertencia("Seleccione un docente de la tabla.");
+            return;
+        }
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                "ADVERTENCIA️\nEstá a punto de eliminar '" + s.getNombre() + "' de Docentes.\n" +
-                        "Esto puede borrar en cascada otros registros relacionados. ¿Seguro?",
-                ButtonType.YES, ButtonType.NO);
+        boolean confirmar = app.util.AlertUtil.pedirConfirmacion("Confirmar Eliminacion", 
+                "ADVERTENCIA\nEsta a punto de eliminar a '" + s.getNombre() + "'.\n" +
+                "Esto puede borrar en cascada otros registros relacionados. ¿Seguro?");
 
-        alert.showAndWait().ifPresent(r -> {
-            if (r == ButtonType.YES) {
-                docenteDAO.eliminar(s.getId());
-                cargarDatos();
-                onDataChanged.run();
-            }
-        });
+        if (confirmar) {
+            docenteDAO.eliminar(s.getId());
+            cargarDatos();
+            onDataChanged.run();
+        }
     }
 }

@@ -64,14 +64,13 @@ public class ImportExcelController {
         if (dest != null) {
             try (InputStream in = getClass().getResourceAsStream("/ejemploExcel/ejemplo.xlsx")) {
                 if (in == null) {
-                    new Alert(Alert.AlertType.ERROR,
-                            "No se encontró 'ejemplo.xlsx' en la carpeta resources del proyecto.").show();
+                    app.util.AlertUtil.mostrarError("No se encontro 'ejemplo.xlsx' en la carpeta resources del proyecto.");
                     return;
                 }
                 Files.copy(in, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                new Alert(Alert.AlertType.INFORMATION, "Excel de ejemplo guardado con éxito.").show();
+                app.util.AlertUtil.mostrarInfo("Excel de ejemplo guardado con exito.");
             } catch (IOException e) {
-                new Alert(Alert.AlertType.ERROR, "Error al guardar: " + e.getMessage()).show();
+                app.util.AlertUtil.mostrarError("Error al guardar: " + e.getMessage());
             }
         }
     }
@@ -102,17 +101,13 @@ public class ImportExcelController {
                 progressExcel.setVisible(false);
                 org.apache.poi.ss.usermodel.Workbook wbProcesado = tarea.getValue();
 
-                Alert preg = new Alert(Alert.AlertType.CONFIRMATION,
-                        "El archivo se procesó correctamente y se detectaron choques.\n" +
-                                "¿Desea exportar el archivo con las nuevas hojas de análisis de choques?",
-                        ButtonType.YES, ButtonType.NO);
-                preg.setHeaderText("Análisis Completado");
+                boolean confirmar = app.util.AlertUtil.pedirConfirmacion("Analisis Completado",
+                        "El archivo se proceso correctamente y se detectaron choques.\n" +
+                        "¿Desea exportar el archivo con las nuevas hojas de analisis de choques?");
 
-                preg.showAndWait().ifPresent(res -> {
-                    if (res == ButtonType.YES) {
-                        exportarExcelProcesado(wbProcesado, inputFile);
-                    }
-                });
+                if (confirmar) {
+                    exportarExcelProcesado(wbProcesado, inputFile);
+                }
             });
 
             tarea.setOnFailed(e -> {
@@ -136,7 +131,7 @@ public class ImportExcelController {
             try (FileOutputStream out = new FileOutputStream(outFile)) {
                 wbProcesado.write(out);
                 logExcel(">> Archivo guardado en: " + outFile.getAbsolutePath());
-                new Alert(Alert.AlertType.INFORMATION, "Archivo exportado con éxito.").show();
+                app.util.AlertUtil.mostrarInfo("Archivo exportado con exito.");
             } catch (Exception ex) {
                 logExcel(">> Error al guardar: " + ex.getMessage());
             }
@@ -148,13 +143,13 @@ public class ImportExcelController {
     // ==========================================
 
     public void extraerEInyectarDatos() {
-        // 1. Alerta de advertencia crítica
+        // 1. Alerta de advertencia critica (mantendremos la manual debido a los 3 botones)
         Alert advertencia = new Alert(Alert.AlertType.WARNING,
-                "ATENCIÓN: Esta acción borrará todos los horarios, paralelos y docentes actuales de la base de datos " +
+                "ATENCION: Esta accion borrara todos los horarios, paralelos y docentes actuales de la base de datos " +
                         "para reemplazarlos por los datos del archivo Excel.\n\n" +
                         "¿Desea hacer un respaldo de su base de datos actual antes de continuar?",
                 ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
-        advertencia.setTitle("Precaución: Reescritura de Base de Datos");
+        advertencia.setTitle("Precaucion: Reescritura de Base de Datos");
 
         Optional<ButtonType> res = advertencia.showAndWait();
         if (res.isPresent() && res.get() == ButtonType.CANCEL) return;
@@ -191,11 +186,11 @@ public class ImportExcelController {
                 logExcel(">> Respaldo guardado exitosamente en: " + backupFile.getAbsolutePath());
                 return true;
             } catch (Exception e) {
-                new Alert(Alert.AlertType.ERROR, "Error al crear respaldo: " + e.getMessage()).show();
+                app.util.AlertUtil.mostrarError("Error al crear respaldo: " + e.getMessage());
                 return false;
             }
         }
-        return false; // Canceló el guardado
+        return false; // Cancelo el guardado
     }
 
     private void ejecutarInyeccion(File inputFile) {
@@ -212,8 +207,7 @@ public class ImportExcelController {
 
         tarea.setOnSucceeded(e -> {
             progressExcel.setVisible(false);
-            new Alert(Alert.AlertType.INFORMATION,
-                    "Base de datos actualizada correctamente. \nVaya a las pestañas para ver los nuevos datos.").show();
+            app.util.AlertUtil.mostrarInfo("Base de datos actualizada correctamente. \nVaya a las pestañas para ver los nuevos datos.");
             onDataImported.run();
         });
 

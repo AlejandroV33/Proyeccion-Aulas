@@ -77,11 +77,7 @@ public class AsignacionController {
             excelService.generarReporte(path, vistaDAO.listarResultados());
             escribirConsola("excel exportado correctamente a: " + path);
 
-            Alert alerta = new Alert(Alert.AlertType.INFORMATION);
-            alerta.setTitle("Éxito");
-            alerta.setHeaderText(null);
-            alerta.setContentText("reporte generado exitosamente en el escritorio.");
-            alerta.showAndWait();
+            app.util.AlertUtil.mostrarInfo("reporte generado exitosamente en el escritorio.");
         } catch (Exception e) {
             escribirConsola("error al exportar excel: " + e.getMessage());
         }

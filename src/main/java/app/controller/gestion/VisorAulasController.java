@@ -210,39 +210,33 @@ public class VisorAulasController {
 
     public void exportarExcelVisor() {
         if (tablaVisorAulas.getItems().isEmpty()) {
-            new Alert(Alert.AlertType.WARNING, "No hay datos visibles en la tabla para exportar.").show();
+            app.util.AlertUtil.mostrarAdvertencia("No hay datos visibles en la tabla para exportar.");
             return;
         }
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                "Se exportará un Excel estructurado con los registros actualmente visibles " +
-                        "y los filtros aplicados en la tabla.\n¿Desea continuar?",
-                ButtonType.OK, ButtonType.CANCEL);
-        alert.setHeaderText("Exportar Reporte de Aulas");
+        boolean confirmar = app.util.AlertUtil.pedirConfirmacionOkCancel("Exportar Reporte de Aulas", 
+                "Se exportara un Excel estructurado con los registros actualmente visibles " +
+                "y los filtros aplicados en la tabla.\n¿Desea continuar?");
 
-        alert.showAndWait().ifPresent(res -> {
-            if (res == ButtonType.OK) {
-                FileChooser fileChooser = new FileChooser();
-                fileChooser.setTitle("Guardar Reporte de Aulas");
-                fileChooser.setInitialFileName("Ocupacion_Aulas_Filtrado.xlsx");
-                fileChooser.getExtensionFilters().add(
-                        new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+        if (confirmar) {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Guardar Reporte de Aulas");
+            fileChooser.setInitialFileName("Ocupacion_Aulas_Filtrado.xlsx");
+            fileChooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
 
-                File file = fileChooser.showSaveDialog(mainTabPane.getScene().getWindow());
+            File file = fileChooser.showSaveDialog(mainTabPane.getScene().getWindow());
 
-                if (file != null) {
-                    try {
-                        new app.model.service.ExcelExportarAulasService()
-                                .exportarVisor(tablaVisorAulas.getItems(), file);
-                        new Alert(Alert.AlertType.INFORMATION,
-                                "¡Excel exportado exitosamente en:\n" + file.getAbsolutePath()).show();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        new Alert(Alert.AlertType.ERROR,
-                                "Error al crear el archivo Excel: " + e.getMessage()).show();
-                    }
+            if (file != null) {
+                try {
+                    new app.model.service.ExcelExportarAulasService()
+                            .exportarVisor(tablaVisorAulas.getItems(), file);
+                    app.util.AlertUtil.mostrarInfo("Excel exportado exitosamente en:\n" + file.getAbsolutePath());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    app.util.AlertUtil.mostrarError("Error al crear el archivo Excel: " + e.getMessage());
                 }
             }
-        });
+        }
     }
 }

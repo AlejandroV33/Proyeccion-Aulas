@@ -69,7 +69,7 @@ public class AulaOcupacion {
         }
 
         // 2. Construcción del texto del bloque
-        String texto = "🕒 " + inicio + ":00 a " + fin + ":00\n📚 " + materia + " (" + paralelo + ")\n👤 " + docenteFormateado;
+        String texto = " " + inicio + ":00 a " + fin + ":00\n " + materia + " (" + paralelo + ")\n " + docenteFormateado;
 
         int duracion = fin - inicio;
         horasTotal += duracion;

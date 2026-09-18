@@ -88,19 +88,19 @@ public class TipoAulaTabController {
 
     public void eliminar() {
         TipoAula s = tablaTiposAulas.getSelectionModel().getSelectedItem();
-        if (s == null) return;
+        if (s == null) {
+            app.util.AlertUtil.mostrarAdvertencia("Seleccione un tipo de aula de la tabla.");
+            return;
+        }
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                "ADVERTENCIA️\nEstá a punto de eliminar '" + s.getNombre() + "' de Tipos de Aulas.\n" +
-                        "Esto puede borrar en cascada otros registros relacionados. ¿Seguro?",
-                ButtonType.YES, ButtonType.NO);
+        boolean confirmar = app.util.AlertUtil.pedirConfirmacion("Confirmar Eliminacion", 
+                "ADVERTENCIA\nEsta a punto de eliminar '" + s.getNombre() + "'.\n" +
+                "Esto borrara en cascada aulas y requerimientos de materia relacionados. ¿Seguro?");
 
-        alert.showAndWait().ifPresent(r -> {
-            if (r == ButtonType.YES) {
-                tipoAulaDAO.eliminar(s.getId());
-                cargarDatos();
-                onDataChanged.run();
-            }
-        });
+        if (confirmar) {
+            tipoAulaDAO.eliminar(s.getId());
+            cargarDatos();
+            onDataChanged.run();
+        }
     }
 }

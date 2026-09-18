@@ -112,14 +112,9 @@ public class MainController {
         try {
             excelService.generarReporte(path, masterData);
             lblEstado.setText("excel exportado a: " + path);
-
-            Alert alerta = new Alert(Alert.AlertType.INFORMATION);
-            alerta.setTitle("Éxito");
-            alerta.setHeaderText(null);
-            alerta.setContentText("reporte generado exitosamente en el escritorio.");
-            alerta.showAndWait();
+            app.util.AlertUtil.mostrarInfo("reporte generado exitosamente en el escritorio.");
         } catch (Exception e) {
-            new Alert(Alert.AlertType.ERROR, "error al exportar excel: " + e.getMessage()).show();
+            app.util.AlertUtil.mostrarError("error al exportar excel: " + e.getMessage());
         }
     }
 
@@ -130,7 +125,7 @@ public class MainController {
             Parent nuevaVista = loader.load();
             tablaResultados.getScene().setRoot(nuevaVista);
         } catch (IOException e) {
-            new Alert(Alert.AlertType.ERROR, "error al cambiar de vista: " + e.getMessage()).show();
+            app.util.AlertUtil.mostrarError("error al cambiar de vista: " + e.getMessage());
         }
     }
 
@@ -153,8 +148,7 @@ public class MainController {
 
             stage.showAndWait();
         } catch (IOException e) {
-            new Alert(Alert.AlertType.ERROR, "error al abrir ventana de asignación: " + e.getMessage()).show();
-            e.printStackTrace();
+            app.util.AlertUtil.mostrarError("error al abrir ventana de asignación: " + e.getMessage());
         }
     }
 }

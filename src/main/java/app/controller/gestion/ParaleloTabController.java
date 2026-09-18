@@ -187,24 +187,18 @@ public class ParaleloTabController {
     public void eliminar() {
         Paralelo selec = tablaParalelos.getSelectionModel().getSelectedItem();
         if (selec == null) {
-            new Alert(Alert.AlertType.WARNING, "Seleccione un paralelo de la tabla.").show();
+            app.util.AlertUtil.mostrarAdvertencia("Seleccione un paralelo de la tabla.");
             return;
         }
 
-        // Advertencia de eliminación en cascada
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                "ADVERTENCIA CRÍTICA \n\nEstá a punto de eliminar el paralelo '" + selec.getNombre() +
-                        "' de la materia '" + selec.getMateria() + "'.\n\n" +
-                        "Esto BORRARÁ EN CASCADA todos los horarios de clases asignados a este paralelo en la base de datos.\n" +
-                        "¿Está completamente seguro?",
-                ButtonType.YES, ButtonType.NO);
+        boolean confirmar = app.util.AlertUtil.pedirConfirmacion("Confirmar Eliminacion", 
+                "ADVERTENCIA\nEsta a punto de eliminar el paralelo '" + selec.getNombre() + "'.\n" +
+                "Esto borrara en cascada horarios relacionados. ¿Seguro?");
 
-        alert.showAndWait().ifPresent(res -> {
-            if (res == ButtonType.YES) {
-                paraleloDAO.eliminar(selec.getId());
-                cargarDatos();
-                onDataChanged.run();
-            }
-        });
+        if (confirmar) {
+            paraleloDAO.eliminar(selec.getId());
+            cargarDatos();
+            onDataChanged.run();
+        }
     }
 }
