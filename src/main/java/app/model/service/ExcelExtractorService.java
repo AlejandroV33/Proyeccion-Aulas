@@ -22,41 +22,50 @@ public class ExcelExtractorService {
     public void extraerEInyectar(File excelFile, Consumer<String> logger) throws Exception {
         logger.accept(">> Iniciando proceso de extracción profunda...");
 
-        // 1. VACIAR TABLAS DEPENDIENTES
-        logger.accept(">> Limpiando tablas: Horarios, Paralelos y Docentes...");
-        horarioDAO.vaciarTabla();
-        paraleloDAO.vaciarTabla();
-        docenteDAO.vaciarTabla();
+        BaseDAO.startTransaction();
+        try {
+            // 1. VACIAR TABLAS DEPENDIENTES
+            logger.accept(">> Limpiando tablas: Horarios, Paralelos y Docentes...");
+            horarioDAO.vaciarTabla();
+            paraleloDAO.vaciarTabla();
+            docenteDAO.vaciarTabla();
 
-        // Cachés en memoria para no duplicar
-        Map<String, Integer> cacheDocentes = new HashMap<>();
-        Map<String, Integer> cacheMaterias = new HashMap<>();
-        Map<String, Integer> cacheParalelos = new HashMap<>();
+            // Cachés en memoria para no duplicar
+            Map<String, Integer> cacheDocentes = new HashMap<>();
+            Map<String, Integer> cacheMaterias = new HashMap<>();
+            Map<String, Integer> cacheParalelos = new HashMap<>();
 
-        try (FileInputStream fis = new FileInputStream(excelFile);
-             Workbook wb = new XSSFWorkbook(fis)) {
+            try (FileInputStream fis = new FileInputStream(excelFile);
+                 Workbook wb = new XSSFWorkbook(fis)) {
 
-            Sheet sheet = wb.getSheetAt(0);
-            Row headerRow = sheet.getRow(0);
-            Map<String, Integer> colMap = mapearColumnas(headerRow);
+                Sheet sheet = wb.getSheetAt(0);
+                Row headerRow = sheet.getRow(0);
+                Map<String, Integer> colMap = mapearColumnas(headerRow);
 
-            logger.accept(">> Analizando " + sheet.getLastRowNum() + " filas encontradas...");
+                logger.accept(">> Analizando " + sheet.getLastRowNum() + " filas encontradas...");
 
-            for (int r = 1; r <= sheet.getLastRowNum(); r++) {
-                Row row = sheet.getRow(r);
-                if (row == null) continue;
+                for (int r = 1; r <= sheet.getLastRowNum(); r++) {
+                    Row row = sheet.getRow(r);
+                    if (row == null) continue;
 
-                // Verificar si la fila tiene materia, si no, es una fila vacía del excel y la saltamos
-                String materiaFull = getCell(row, colMap.get("MATERIA"));
-                if (materiaFull.isEmpty()) continue;
+                    // Verificar si la fila tiene materia, si no, es una fila vacía del excel y la saltamos
+                    String materiaFull = getCell(row, colMap.get("MATERIA"));
+                    if (materiaFull.isEmpty()) continue;
 
-                int idDocente = extraerDocente(row, colMap, cacheDocentes);
-                int idMateria = extraerMateria(row, colMap, cacheMaterias, materiaFull, logger);
-                int idParalelo = extraerParalelo(row, colMap, cacheParalelos, idMateria, idDocente);
-                Integer idAula = extraerAula(row, colMap);
-                extraerHorarios(row, colMap, idParalelo, idAula);
+                    int idDocente = extraerDocente(row, colMap, cacheDocentes);
+                    int idMateria = extraerMateria(row, colMap, cacheMaterias, materiaFull, logger);
+                    int idParalelo = extraerParalelo(row, colMap, cacheParalelos, idMateria, idDocente);
+                    Integer idAula = extraerAula(row, colMap);
+                    extraerHorarios(row, colMap, idParalelo, idAula);
+                }
+                
+                BaseDAO.commitTransaction();
+                logger.accept(">> INYECCIÓN DE DATOS FINALIZADA EXITOSAMENTE.");
             }
-            logger.accept(">> INYECCIÓN DE DATOS FINALIZADA EXISTOSAMENTE.");
+        } catch (Exception e) {
+            BaseDAO.rollbackTransaction();
+            logger.accept(">> ERROR DURANTE LA EXTRACCION. HACIENDO ROLLBACK DE LA BASE DE DATOS.");
+            throw e;
         }
     }
 

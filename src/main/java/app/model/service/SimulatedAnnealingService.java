@@ -213,16 +213,24 @@ public class SimulatedAnnealingService {
         logger.accept(">> guardando resultados definitivos en base de datos...");
         Map<Integer, Aula> mapAulas = aulas.stream().collect(Collectors.toMap(Aula::getId, a -> a));
 
-        for (HorarioDTO h : horarios) {
-            if (h.idAulaAsignada != null) {
-                Aula a = mapAulas.get(h.idAulaAsignada);
-                String prop = h.matriculados + "/" + a.getCapacidad();
-                double idxOcup = (double) h.matriculados / a.getCapacidad();
-                double idxAjuste = OptimizationMetrics.calcularIndiceAjuste(h.matriculados, a.getCapacidad());
+        app.model.dao.BaseDAO.startTransaction();
+        try {
+            for (HorarioDTO h : horarios) {
+                if (h.idAulaAsignada != null) {
+                    Aula a = mapAulas.get(h.idAulaAsignada);
+                    String prop = h.matriculados + "/" + a.getCapacidad();
+                    double idxOcup = (double) h.matriculados / a.getCapacidad();
+                    double idxAjuste = OptimizationMetrics.calcularIndiceAjuste(h.matriculados, a.getCapacidad());
 
-                horarioDAO.actualizarAsignacion(h.id, h.idAulaAsignada, prop, idxOcup, idxAjuste);
+                    horarioDAO.actualizarAsignacion(h.id, h.idAulaAsignada, prop, idxOcup, idxAjuste);
+                }
             }
+            app.model.dao.BaseDAO.commitTransaction();
+            logger.accept(">> guardado completo y exitoso.");
+        } catch (Exception e) {
+            app.model.dao.BaseDAO.rollbackTransaction();
+            logger.accept(">> ERROR al guardar resultados. Transaccion revertida.");
+            throw e;
         }
-        logger.accept(">> guardado completo y exitoso.");
     }
 }
