@@ -108,13 +108,21 @@ public class MainController {
 
     @FXML
     public void exportarExcel() {
-        String path = System.getProperty("user.home") + "/Desktop/Reporte_Aulas_FIQA.xlsx";
-        try {
-            excelService.generarReporte(path, masterData);
-            lblEstado.setText("excel exportado a: " + path);
-            app.util.AlertUtil.mostrarInfo("reporte generado exitosamente en el escritorio.");
-        } catch (Exception e) {
-            app.util.AlertUtil.mostrarError("error al exportar excel: " + e.getMessage());
+        javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+        fileChooser.setTitle("Guardar Reporte de Aulas");
+        fileChooser.setInitialFileName("Reporte_Aulas_FIQA.xlsx");
+        fileChooser.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+        
+        java.io.File dest = fileChooser.showSaveDialog(tablaResultados.getScene().getWindow());
+        if (dest != null) {
+            try {
+                String path = dest.getAbsolutePath();
+                excelService.generarReporte(path, masterData);
+                lblEstado.setText("excel exportado a: " + path);
+                app.util.AlertUtil.mostrarInfo("Reporte generado exitosamente en:\n" + path);
+            } catch (Exception e) {
+                app.util.AlertUtil.mostrarError("error al exportar excel: " + e.getMessage());
+            }
         }
     }
 
