@@ -110,6 +110,31 @@ public class GestionController {
         importExcelController.inicializar(txtConsolaExcel, progressExcel, mainTabPane, onDataChangedGlobal);
         
         visorAulasController.inicializar(comboFiltroEdificio, comboOrdenOcupacion, tablaVisorAulas, colVisAula, colVisLun, colVisMar, colVisMie, colVisJue, colVisVie, chkSoloOcupadas, mainTabPane);
+
+        // Actualizar datos automáticamente al cambiar de pestaña
+        mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab != null) {
+                if (newTab.getText().contains("Visor")) {
+                    visorAulasController.cargarDatos();
+                } else if (newTab.getText().contains("Edición") || newTab.getText().contains("Edicion")) {
+                    Tab activa = tabPaneEdicion.getSelectionModel().getSelectedItem();
+                    actualizarPestaniaSecundaria(activa);
+                }
+            }
+        });
+
+        tabPaneEdicion.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            actualizarPestaniaSecundaria(newTab);
+        });
+    }
+
+    private void actualizarPestaniaSecundaria(Tab activa) {
+        if (activa == tabHorarios) horarioTabController.cargarDatos();
+        else if (activa == tabParalelos) paraleloTabController.cargarDatos();
+        else if (activa == tabMaterias) materiaTabController.cargarDatos();
+        else if (activa == tabDocentes) docenteTabController.cargarDatos();
+        else if (activa == tabAulas) aulaTabController.cargarDatos();
+        else if (activa == tabTipos) tipoAulaTabController.cargarDatos();
     }
 
     private void refrescarDatos() {
@@ -140,8 +165,11 @@ public class GestionController {
     @FXML 
     public void volverInicio() {
         try {
-            Parent r = FXMLLoader.load(getClass().getResource("/app/view/main.fxml"));
+            Parent r = FXMLLoader.load(getClass().getResource("/view/MainView.fxml"));
             mainTabPane.getScene().setRoot(r);
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) {
+            e.printStackTrace();
+            app.util.AlertUtil.mostrarError("Error al volver al inicio: " + e.getMessage());
+        }
     }
 }

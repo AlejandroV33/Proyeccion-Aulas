@@ -22,6 +22,7 @@ public class App extends Application {
 
         stage.setTitle("FIQA - Proyección de Aulas");
         stage.setScene(scene);
+        stage.setResizable(false);
         stage.show();
     }
 
