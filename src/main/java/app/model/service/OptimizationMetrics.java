@@ -17,8 +17,25 @@ public class OptimizationMetrics {
         // penalizacion si esta muy vacio (< 50%)
         double terminoVacio = ALPHA_VACIO * Math.pow(Math.max(0, 0.5 - x), 2);
 
-        // penalizacion si desborda (> 95%)
-        double terminoDesborde = BETA_DESBORDE * Math.pow(Math.max(0, x - 0.98), 2);
+        // penalizacion si desborda
+        double terminoDesborde = 0.0;
+        int exceso = matriculados - capacidad;
+        
+        if (exceso > 0) {
+            // El limite tolerable equivale a ~7.5% de la capacidad del aula
+            // Ejemplo: Capacidad 15 -> limite 1. Capacidad 45 -> limite 3.
+            int limiteTolerable = Math.max(1, (int) Math.floor(capacidad * 0.075));
+            
+            if (exceso > limiteTolerable) {
+                // Penaliza exponencialmente si se pasa del limite tolerable
+                terminoDesborde = Math.pow(3.0, (exceso - limiteTolerable)) * 500.0;
+            } else {
+                // Penaliza linealmente (fuerte pero aceptable) dentro del limite tolerable
+                terminoDesborde = exceso * 50.0;
+            }
+        } else if (x > 0.95) {
+            terminoDesborde = BETA_DESBORDE * Math.pow(x - 0.95, 2);
+        }
 
         return terminoBase + terminoVacio + terminoDesborde;
     }

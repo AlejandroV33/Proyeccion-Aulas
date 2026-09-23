@@ -151,7 +151,7 @@ public class SimulatedAnnealingService {
 
                     Aula nuevaAula = aulasComunes.get(rand.nextInt(aulasComunes.size()));
 
-                    if (nuevaAula.getCapacidad() < h.matriculados) continue;
+                    if (nuevaAula.getCapacidadFlexible() < h.matriculados) continue;
 
                     double costoLocalViejo = evaluator.calcularEnergiaLocal(h, todosHorarios, aulasMap);
                     h.idAulaAsignada = nuevaAula.getId();
@@ -189,7 +189,7 @@ public class SimulatedAnnealingService {
                     Aula a2 = aulasMap.get(aulaOrig2);
 
                     // Validar capacidades cruzadas
-                    if (a2.getCapacidad() < h1.matriculados || a1.getCapacidad() < h2.matriculados) continue;
+                    if (a2.getCapacidadFlexible() < h1.matriculados || a1.getCapacidadFlexible() < h2.matriculados) continue;
 
                     // Calculo secuencial para evitar desincronizacion (drift) en caso de interacciones
                     // Paso 1: Mover h1 al aula de h2
@@ -227,12 +227,17 @@ public class SimulatedAnnealingService {
     }
 
     private void generarSolucionInicial(List<HorarioDTO> horarios, List<Aula> aulas) {
-        for (HorarioDTO h : horarios) {
+        // Ordenar materias por matriculados (de mayor a menor) - Heuristica Golosa
+        List<HorarioDTO> horariosOrdenados = new ArrayList<>(horarios);
+        horariosOrdenados.sort((h1, h2) -> Integer.compare(h2.matriculados, h1.matriculados));
+
+        for (HorarioDTO h : horariosOrdenados) {
             List<Aula> validas = aulas.stream()
                     .filter(a -> a.getCapacidadFlexible() >= h.matriculados)
                     .collect(Collectors.toList());
 
-            Collections.shuffle(validas);
+            // Ordenar aulas válidas por capacidad (de menor a mayor) para un Best-Fit
+            validas.sort(Comparator.comparingInt(Aula::getCapacidad));
 
             for (Aula a : validas) {
                 h.idAulaAsignada = a.getId();

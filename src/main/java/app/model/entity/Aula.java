@@ -40,9 +40,9 @@ public class Aula {
     public int getCapacidad() { return capacidad; }
     public void setCapacidad(int capacidad) { this.capacidad = capacidad; }
 
-    //se pueden mover sillas y aumentar la capacidad
+    //se pueden mover sillas y aumentar la capacidad proporcionalmente al tamaño del aula
     public int getCapacidadFlexible() {
-        return (capacidad + 3);
+        return capacidad + Math.max(3, (int)(capacidad * 0.15));
     }
 
     public String getEstado() { return estado; }
