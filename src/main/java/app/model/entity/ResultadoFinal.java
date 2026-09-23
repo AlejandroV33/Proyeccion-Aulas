@@ -5,6 +5,7 @@ public class ResultadoFinal {
     private String profesor;
     private int idDocente;
     private String materia;
+    private String codigoMateria;
     private int idMateria;
     private int semestre;
     private String departamento;
@@ -43,6 +44,9 @@ public class ResultadoFinal {
 
     public String getMateria() { return materia; }
     public void setMateria(String materia) { this.materia = materia; }
+
+    public String getCodigoMateria() { return codigoMateria; }
+    public void setCodigoMateria(String codigoMateria) { this.codigoMateria = codigoMateria; }
 
     public int getIdMateria() { return idMateria; }
     public void setIdMateria(int idMateria) { this.idMateria = idMateria; }

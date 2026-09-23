@@ -29,6 +29,7 @@ public class VistaResultadoDAO extends BaseDAO {
                 // datos informativos
                 r.setProfesor(rs.getString("profesor"));
                 r.setMateria(rs.getString("materia"));
+                r.setCodigoMateria(rs.getString("codigo_materia"));
                 r.setSemestre(rs.getInt("semestre"));
                 r.setDepartamento(rs.getString("departamento"));
                 r.setCreditos(rs.getInt("creditos"));

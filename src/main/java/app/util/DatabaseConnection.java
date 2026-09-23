@@ -163,14 +163,16 @@ public class DatabaseConnection {
                 );
                 """;
 
+        String sqlVistaResultadoFinalDrop = "DROP VIEW IF EXISTS resultado_final_total;";
         String sqlVistaResultadoFinal = """
-                CREATE VIEW IF NOT EXISTS resultado_final_total AS
+                CREATE VIEW resultado_final_total AS
                 SELECT
                     p.id AS id_paralelo,
                     d.id AS id_docente,
                     d.nombre AS profesor,
                     m.id AS id_materia,
                     m.nombre AS materia,
+                    m.codigo AS codigo_materia,
                     m.semestre,
                     m.departamento,
                     m.creditos,
@@ -227,6 +229,7 @@ public class DatabaseConnection {
             stmt.execute(sqlAulas);
             stmt.execute(sqlParalelos);
             stmt.execute(sqlHorarios);
+            stmt.execute(sqlVistaResultadoFinalDrop);
             stmt.execute(sqlVistaResultadoFinal);
 
         } catch (SQLException e) {

@@ -287,7 +287,7 @@ public class SimulatedAnnealingService {
                 if (h.idAulaAsignada != null) {
                     Aula a = mapAulas.get(h.idAulaAsignada);
                     String prop = h.matriculados + "/" + a.getCapacidad();
-                    double idxOcup = (double) h.matriculados / a.getCapacidad();
+                    double idxOcup = a.getCapacidad() > 0 ? (double) h.matriculados / a.getCapacidad() : 0.0;
                     double idxAjuste = OptimizationMetrics.calcularIndiceAjuste(h.matriculados, a.getCapacidad());
 
                     horarioDAO.actualizarAsignacion(h.id, h.idAulaAsignada, prop, idxOcup, idxAjuste);
