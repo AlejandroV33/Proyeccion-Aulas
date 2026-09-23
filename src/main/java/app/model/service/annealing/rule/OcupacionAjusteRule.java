@@ -15,7 +15,7 @@ public class OcupacionAjusteRule implements OptimizationRule {
                 if (esComun(h.nombreTipoAula)) {
                     energiaOcupacion += 10.0;
                 }
-            } else {
+            } else if (esComun(h.nombreTipoAula)) {
                 Aula a = aulas.get(h.idAulaAsignada);
                 energiaOcupacion += OptimizationMetrics.calcularIndiceAjuste(h.matriculados, a.getCapacidad());
             }
@@ -25,8 +25,10 @@ public class OcupacionAjusteRule implements OptimizationRule {
 
     @Override
     public double calculateLocalPenalty(HorarioDTO target, List<HorarioDTO> horarios, Map<Integer, Aula> aulas, int asignados) {
+        if (!esComun(target.nombreTipoAula)) return 0.0;
+        
         if (target.idAulaAsignada == null) {
-            return esComun(target.nombreTipoAula) ? (10.0 / asignados) : 0;
+            return (10.0 / asignados);
         }
         Aula a = aulas.get(target.idAulaAsignada);
         return OptimizationMetrics.calcularIndiceAjuste(target.matriculados, a.getCapacidad()) / asignados;

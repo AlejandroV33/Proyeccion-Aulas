@@ -102,27 +102,37 @@ public class SimulatedAnnealingService {
     private void asignarEspeciales(List<HorarioDTO> horarios, List<Aula> aulas, Consumer<String> logger) {
         logger.accept(">> asignando aulas especiales...");
 
-        for (HorarioDTO h : horarios) {
-            Aula mejorAula = null;
-            double menorCosto = Double.MAX_VALUE;
+        // Ordenamos las materias masivas primero
+        List<HorarioDTO> ordenados = new ArrayList<>(horarios);
+        ordenados.sort((h1, h2) -> Integer.compare(h2.matriculados, h1.matriculados));
+
+        for (HorarioDTO h : ordenados) {
+            Aula aulaAsignada = null;
 
             List<Aula> candidatas = aulas.stream()
                     .filter(a -> a.getIdTipoAula() == h.idTipoAulaReq)
-                    .filter(a -> a.getCapacidadFlexible() >= h.matriculados)
                     .toList();
 
+            // Intento 1: Aula que cumpla con la capacidad (flexible) y que no este ocupada
             for (Aula a : candidatas) {
-                if (estaOcupada(a.getId(), h, horarios)) continue;
-
-                double costo = OptimizationMetrics.calcularIndiceAjuste(h.matriculados, a.getCapacidad());
-                if (costo < menorCosto) {
-                    menorCosto = costo;
-                    mejorAula = a;
+                if (!estaOcupada(a.getId(), h, horarios) && a.getCapacidadFlexible() >= h.matriculados) {
+                    aulaAsignada = a;
+                    break;
                 }
             }
 
-            if (mejorAula != null) {
-                h.idAulaAsignada = mejorAula.getId();
+            // Intento 2 (Último recurso): Cualquier aula libre de ese tipo, sin importar la capacidad
+            if (aulaAsignada == null) {
+                for (Aula a : candidatas) {
+                    if (!estaOcupada(a.getId(), h, horarios)) {
+                        aulaAsignada = a;
+                        break;
+                    }
+                }
+            }
+
+            if (aulaAsignada != null) {
+                h.idAulaAsignada = aulaAsignada.getId();
             } else {
                 logger.accept(String.format("alerta (sin aula especial) para el horario: | %s | %s | %s | %s | %d-%d | matriculados: %d | tipo de aula requerida: %s",
                         h.docente, h.materia, h.paralelo, h.dia, h.horaInicio, h.horaFin, h.matriculados, h.nombreTipoAula));
