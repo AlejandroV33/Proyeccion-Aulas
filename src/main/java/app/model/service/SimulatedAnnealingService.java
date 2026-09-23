@@ -246,8 +246,9 @@ public class SimulatedAnnealingService {
                     .filter(a -> a.getCapacidadFlexible() >= h.matriculados)
                     .collect(Collectors.toList());
 
-            // Ordenar aulas válidas por capacidad (de menor a mayor) para un Best-Fit
-            validas.sort(Comparator.comparingInt(Aula::getCapacidad));
+            // Asignar al azar entre las aulas validas para mantener la diversidad de los 3 intentos
+            // y evitar el sobrellenado intencional del Best-Fit
+            Collections.shuffle(validas);
 
             for (Aula a : validas) {
                 h.idAulaAsignada = a.getId();
