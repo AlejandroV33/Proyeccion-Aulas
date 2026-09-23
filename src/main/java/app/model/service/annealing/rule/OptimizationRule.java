@@ -7,4 +7,5 @@ import java.util.Map;
 
 public interface OptimizationRule {
     double calculatePenalty(List<HorarioDTO> horarios, Map<Integer, Aula> aulas, int asignados);
+    double calculateLocalPenalty(HorarioDTO target, List<HorarioDTO> horarios, Map<Integer, Aula> aulas, int asignados);
 }

@@ -23,6 +23,15 @@ public class OcupacionAjusteRule implements OptimizationRule {
         return energiaOcupacion / asignados;
     }
 
+    @Override
+    public double calculateLocalPenalty(HorarioDTO target, List<HorarioDTO> horarios, Map<Integer, Aula> aulas, int asignados) {
+        if (target.idAulaAsignada == null) {
+            return esComun(target.nombreTipoAula) ? (10.0 / asignados) : 0;
+        }
+        Aula a = aulas.get(target.idAulaAsignada);
+        return OptimizationMetrics.calcularIndiceAjuste(target.matriculados, a.getCapacidad()) / asignados;
+    }
+
     private boolean esComun(String tipo) {
         return tipo != null && tipo.equalsIgnoreCase("comun");
     }

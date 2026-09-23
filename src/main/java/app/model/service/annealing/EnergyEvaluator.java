@@ -31,4 +31,22 @@ public class EnergyEvaluator {
 
         return totalEnergy;
     }
+
+    public double calcularEnergiaLocal(HorarioDTO target, List<HorarioDTO> todosHorarios, Map<Integer, Aula> aulasMap) {
+        int asignados = 0;
+        for (HorarioDTO h : todosHorarios) {
+            if (h.idAulaAsignada != null) {
+                asignados++;
+            }
+        }
+
+        if (asignados == 0) return 0.0;
+
+        double localEnergy = 0.0;
+        for (OptimizationRule rule : rules) {
+            localEnergy += rule.calculateLocalPenalty(target, todosHorarios, aulasMap, asignados);
+        }
+
+        return localEnergy;
+    }
 }

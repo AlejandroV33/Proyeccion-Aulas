@@ -49,6 +49,26 @@ public class UnicoPisoMateriaRule implements OptimizationRule {
         }
         return pesoHard * penalizacion;
     }
+
+    @Override
+    public double calculateLocalPenalty(HorarioDTO target, List<HorarioDTO> horarios, Map<Integer, Aula> aulas, int asignados) {
+        if (target.docente == null || target.docente.equalsIgnoreCase("Sin profesor") || !esComun(target.nombreTipoAula)) {
+            return 0.0;
+        }
+
+        Set<String> pisosDeEstaMateria = new HashSet<>();
+        for (HorarioDTO h : horarios) {
+            if (h.idAulaAsignada != null && h.docente != null && h.docente.equals(target.docente) && h.materia.equals(target.materia) && esComun(h.nombreTipoAula)) {
+                Aula a = aulas.get(h.idAulaAsignada);
+                pisosDeEstaMateria.add(a.getEdificio() + "|" + a.getPiso());
+            }
+        }
+
+        if (pisosDeEstaMateria.size() > 1) {
+            return pesoHard * 50.0 * (pisosDeEstaMateria.size() - 1);
+        }
+        return 0.0;
+    }
     
     private boolean esComun(String tipo) {
         return tipo != null && tipo.equalsIgnoreCase("comun");

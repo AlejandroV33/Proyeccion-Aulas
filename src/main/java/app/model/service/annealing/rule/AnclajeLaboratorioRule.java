@@ -56,6 +56,36 @@ public class AnclajeLaboratorioRule implements OptimizationRule {
         }
         return pesoHard * penalizacion;
     }
+
+    @Override
+    public double calculateLocalPenalty(HorarioDTO target, List<HorarioDTO> horarios, Map<Integer, Aula> aulas, int asignados) {
+        if (target.docente == null || target.docente.equalsIgnoreCase("Sin profesor")) {
+            return 0.0;
+        }
+
+        Set<String> pisosDeTodasLasMaterias = new HashSet<>();
+        Set<String> pisosLaboratorios = new HashSet<>();
+        
+        for (HorarioDTO h : horarios) {
+            if (h.idAulaAsignada != null && h.docente != null && h.docente.equals(target.docente)) {
+                Aula a = aulas.get(h.idAulaAsignada);
+                if (esComun(h.nombreTipoAula)) {
+                    pisosDeTodasLasMaterias.add(a.getEdificio() + "|" + a.getPiso());
+                } else {
+                    pisosLaboratorios.add(a.getEdificio() + "|" + a.getPiso());
+                }
+            }
+        }
+
+        if (pisosDeTodasLasMaterias.isEmpty() || pisosLaboratorios.isEmpty()) {
+            return 0.0;
+        }
+
+        boolean anclajeExitoso = pisosLaboratorios.stream()
+                .anyMatch(pisosDeTodasLasMaterias::contains);
+
+        return anclajeExitoso ? 0.0 : pesoHard * 100.0;
+    }
     
     private boolean esComun(String tipo) {
         return tipo != null && tipo.equalsIgnoreCase("comun");

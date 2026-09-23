@@ -40,4 +40,41 @@ public class DistanciaDocenteRule implements OptimizationRule {
         }
         return peso * (energiaDistanciaDoc / asignados);
     }
+
+    @Override
+    public double calculateLocalPenalty(HorarioDTO target, List<HorarioDTO> horarios, Map<Integer, Aula> aulas, int asignados) {
+        if (target.idAulaAsignada == null || target.docente == null || target.docente.equalsIgnoreCase("Sin profesor") || target.docente.isEmpty()) return 0.0;
+        
+        double energiaDistanciaDoc = 0;
+        Aula aTarget = aulas.get(target.idAulaAsignada);
+        
+        for (HorarioDTO otro : horarios) {
+            if (otro == target || otro.idAulaAsignada == null || !otro.dia.equals(target.dia) || !target.docente.equals(otro.docente)) continue;
+            
+            // Caso 1: otro ocurre justo ANTES de target
+            if (otro.horaFin == target.horaInicio) {
+                Aula aOtro = aulas.get(otro.idAulaAsignada);
+                energiaDistanciaDoc += getPenalty(aOtro, aTarget);
+            }
+            
+            // Caso 2: otro ocurre justo DESPUES de target
+            if (target.horaFin == otro.horaInicio) {
+                Aula aOtro = aulas.get(otro.idAulaAsignada);
+                energiaDistanciaDoc += getPenalty(aTarget, aOtro);
+            }
+        }
+        return peso * (energiaDistanciaDoc / asignados);
+    }
+    
+    private double getPenalty(Aula a1, Aula a2) {
+        if (a1.getId() == a2.getId()) return 0.0;
+        if (a1.getEdificio().equals(a2.getEdificio())) {
+            if (a1.getPiso().equals(a2.getPiso())) {
+                return 2;
+            } else {
+                return 10;
+            }
+        }
+        return 30;
+    }
 }

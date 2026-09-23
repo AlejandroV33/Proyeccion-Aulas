@@ -149,14 +149,23 @@ public class SimulatedAnnealingService {
 
                 if (nuevaAula.getCapacidad() < h.matriculados) continue;
 
+                // 1. Obtener costo local ANTES del cambio
+                double costoLocalViejo = evaluator.calcularEnergiaLocal(h, todosHorarios, aulasMap);
+
+                // 2. Realizar el cambio de aula en 'h'
                 h.idAulaAsignada = nuevaAula.getId();
 
+                // 3. Validar colisiones (si hay colisión, revertir y usar continue)
                 if (hayColision(h, comunes)) {
                     h.idAulaAsignada = aulaOriginal;
                     continue;
                 }
 
-                double nuevaEnergia = evaluator.calcularEnergiaTotal(todosHorarios, aulasMap);
+                // 4. Obtener costo local DESPUÉS del cambio
+                double costoLocalNuevo = evaluator.calcularEnergiaLocal(h, todosHorarios, aulasMap);
+
+                // 5. Calcular la Nueva Energía Total sumando el Delta
+                double nuevaEnergia = energiaActual - costoLocalViejo + costoLocalNuevo;
                 double delta = nuevaEnergia - energiaActual;
 
                 if (delta < 0) {
