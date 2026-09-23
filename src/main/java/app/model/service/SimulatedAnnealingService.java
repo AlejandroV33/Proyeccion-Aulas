@@ -141,40 +141,83 @@ public class SimulatedAnnealingService {
 
         while (temperatura > TEMP_FINAL) {
             for (int i = 0; i < ITERACIONES_POR_TEMP; i++) {
-                int idx = rand.nextInt(comunes.size());
-                HorarioDTO h = comunes.get(idx);
-                Integer aulaOriginal = h.idAulaAsignada;
+                if (rand.nextBoolean()) {
+                    // ==========================================
+                    // OPERACION 1: MOVE (Mover a un aula aleatoria)
+                    // ==========================================
+                    int idx = rand.nextInt(comunes.size());
+                    HorarioDTO h = comunes.get(idx);
+                    Integer aulaOriginal = h.idAulaAsignada;
 
-                Aula nuevaAula = aulasComunes.get(rand.nextInt(aulasComunes.size()));
+                    Aula nuevaAula = aulasComunes.get(rand.nextInt(aulasComunes.size()));
 
-                if (nuevaAula.getCapacidad() < h.matriculados) continue;
+                    if (nuevaAula.getCapacidad() < h.matriculados) continue;
 
-                // 1. Obtener costo local ANTES del cambio
-                double costoLocalViejo = evaluator.calcularEnergiaLocal(h, todosHorarios, aulasMap);
+                    double costoLocalViejo = evaluator.calcularEnergiaLocal(h, todosHorarios, aulasMap);
+                    h.idAulaAsignada = nuevaAula.getId();
 
-                // 2. Realizar el cambio de aula en 'h'
-                h.idAulaAsignada = nuevaAula.getId();
+                    if (hayColision(h, comunes)) {
+                        h.idAulaAsignada = aulaOriginal;
+                        continue;
+                    }
 
-                // 3. Validar colisiones (si hay colisión, revertir y usar continue)
-                if (hayColision(h, comunes)) {
-                    h.idAulaAsignada = aulaOriginal;
-                    continue;
-                }
+                    double costoLocalNuevo = evaluator.calcularEnergiaLocal(h, todosHorarios, aulasMap);
+                    double delta = costoLocalNuevo - costoLocalViejo;
 
-                // 4. Obtener costo local DESPUÉS del cambio
-                double costoLocalNuevo = evaluator.calcularEnergiaLocal(h, todosHorarios, aulasMap);
-
-                // 5. Calcular la Nueva Energía Total sumando el Delta
-                double nuevaEnergia = energiaActual - costoLocalViejo + costoLocalNuevo;
-                double delta = nuevaEnergia - energiaActual;
-
-                if (delta < 0) {
-                    energiaActual = nuevaEnergia;
-                } else {
-                    if (Math.exp(-delta / temperatura) > rand.nextDouble()) {
-                        energiaActual = nuevaEnergia;
+                    if (delta < 0 || Math.exp(-delta / temperatura) > rand.nextDouble()) {
+                        energiaActual += delta;
                     } else {
                         h.idAulaAsignada = aulaOriginal;
+                    }
+                } else {
+                    // ==========================================
+                    // OPERACION 2: SWAP (Intercambiar dos horarios)
+                    // ==========================================
+                    int idx1 = rand.nextInt(comunes.size());
+                    int idx2 = rand.nextInt(comunes.size());
+                    if (idx1 == idx2) continue;
+
+                    HorarioDTO h1 = comunes.get(idx1);
+                    HorarioDTO h2 = comunes.get(idx2);
+
+                    if (h1.idAulaAsignada == null || h2.idAulaAsignada == null || h1.idAulaAsignada.equals(h2.idAulaAsignada)) continue;
+
+                    Integer aulaOrig1 = h1.idAulaAsignada;
+                    Integer aulaOrig2 = h2.idAulaAsignada;
+
+                    Aula a1 = aulasMap.get(aulaOrig1);
+                    Aula a2 = aulasMap.get(aulaOrig2);
+
+                    // Validar capacidades cruzadas
+                    if (a2.getCapacidad() < h1.matriculados || a1.getCapacidad() < h2.matriculados) continue;
+
+                    // Calculo secuencial para evitar desincronizacion (drift) en caso de interacciones
+                    // Paso 1: Mover h1 al aula de h2
+                    double costoLocalViejo1 = evaluator.calcularEnergiaLocal(h1, todosHorarios, aulasMap);
+                    h1.idAulaAsignada = aulaOrig2;
+                    double costoLocalNuevo1 = evaluator.calcularEnergiaLocal(h1, todosHorarios, aulasMap);
+                    double delta1 = costoLocalNuevo1 - costoLocalViejo1;
+
+                    // Paso 2: Mover h2 al aula de h1 (h1 ya esta en a2, asi que interactuaran correctamente)
+                    double costoLocalViejo2 = evaluator.calcularEnergiaLocal(h2, todosHorarios, aulasMap);
+                    h2.idAulaAsignada = aulaOrig1;
+                    double costoLocalNuevo2 = evaluator.calcularEnergiaLocal(h2, todosHorarios, aulasMap);
+                    double delta2 = costoLocalNuevo2 - costoLocalViejo2;
+
+                    double deltaTotal = delta1 + delta2;
+
+                    // Verificar colisiones en el estado final
+                    if (hayColision(h1, comunes) || hayColision(h2, comunes)) {
+                        h1.idAulaAsignada = aulaOrig1;
+                        h2.idAulaAsignada = aulaOrig2;
+                        continue;
+                    }
+
+                    if (deltaTotal < 0 || Math.exp(-deltaTotal / temperatura) > rand.nextDouble()) {
+                        energiaActual += deltaTotal;
+                    } else {
+                        h1.idAulaAsignada = aulaOrig1;
+                        h2.idAulaAsignada = aulaOrig2;
                     }
                 }
             }
