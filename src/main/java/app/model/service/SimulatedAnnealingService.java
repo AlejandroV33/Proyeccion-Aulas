@@ -17,11 +17,11 @@ public class SimulatedAnnealingService {
     private final HorarioDAO horarioDAO = new HorarioDAO();
     private final AulaDAO aulaDAO = new AulaDAO();
 
-    // parametros annealing ajustados
-    private static final double TEMP_INICIAL = 20.0;
+    // parametros annealing ajustados (mas ligeros)
+    private static final double TEMP_INICIAL = 10.0;
     private static final double TEMP_FINAL = 0.001;
-    private static final double COOLING_RATE = 0.9995;
-    private static final int ITERACIONES_POR_TEMP = 5000;
+    private static final double COOLING_RATE = 0.995;
+    private static final int ITERACIONES_POR_TEMP = 2000;
 
     private final EnergyEvaluator evaluator;
 
