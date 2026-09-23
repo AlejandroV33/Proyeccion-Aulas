@@ -333,7 +333,9 @@ public class ExcelPrepararService {
                 if (DateUtil.isCellDateFormatted(cell)) {
                     Calendar cal = Calendar.getInstance();
                     cal.setTime(cell.getDateCellValue());
-                    return (cal.get(Calendar.MONTH) + 1) + "-" + cal.get(Calendar.DAY_OF_MONTH);
+                    int month = cal.get(Calendar.MONTH) + 1;
+                    int day = cal.get(Calendar.DAY_OF_MONTH);
+                    return Math.min(month, day) + "-" + Math.max(month, day);
                 }
                 double val = cell.getNumericCellValue();
                 return (val % 1 == 0) ? String.valueOf((long)val) : String.valueOf(val);

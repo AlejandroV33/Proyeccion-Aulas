@@ -177,7 +177,16 @@ public class ExcelExtractorService {
         if (c == null) return "";
         switch (c.getCellType()) {
             case STRING: return c.getStringCellValue().trim();
-            case NUMERIC: return String.valueOf(c.getNumericCellValue());
+            case NUMERIC:
+                if (org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(c)) {
+                    java.util.Calendar cal = java.util.Calendar.getInstance();
+                    cal.setTime(c.getDateCellValue());
+                    int month = cal.get(java.util.Calendar.MONTH) + 1;
+                    int day = cal.get(java.util.Calendar.DAY_OF_MONTH);
+                    return Math.min(month, day) + "-" + Math.max(month, day);
+                }
+                double val = c.getNumericCellValue();
+                return (val % 1 == 0) ? String.valueOf((long)val) : String.valueOf(val);
             case BOOLEAN: return String.valueOf(c.getBooleanCellValue());
             default: return "";
         }
